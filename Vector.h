@@ -1,10 +1,16 @@
 #pragma once
 
-template <typename T, typename Allocator = std::allocator<T>> // todo add allocator
+namespace Constants {
+constexpr unsigned GROWTH_FACTOR = 2;
+constexpr unsigned DEFAULT_SIZE = 0;
+}
+
+template <typename T, typename Allocator = std::allocator<T>>
 class Vector {
 public:
     Vector();
-    explicit Vector(size_t initialCapacity);
+    explicit Vector(size_t initialSize);
+    Vector(size_t initialSize, const T& initialObject);
 
     Vector(const Vector& other);
     Vector(Vector&& other) noexcept;
@@ -15,81 +21,124 @@ public:
     ~Vector();
 
 public:
-    const T* getData() const { return data; }
-    size_t size() const { return count; };
-    size_t capacity() const { return capacity; }
+    const T* getData() const { return arr; }
+    size_t getSize() const { return size; };
+    size_t getCapacity() const { return capacity; }
 
-    bool empty() const { return count == 0; }
+    bool empty() const { return size == 0; }
 
-    // todo add reserve with allocator method
-    void resize(size_t newCapacity);
+    void resize(size_t newSize);
+    void reserve(size_t newCapacity);
     void shrink_to_fit();
+
+    size_t calculateCapacity() const;
 
     T& operator[](size_t index);
     const T& operator[](size_t index) const;
 
     void push_back(const T& elem);
+    void push_back(T&& elem);
     void pop_back();
+
+    void clear();
+
+    // class iterator;
+    // class const_iterator;
+    // class reverse_iterator;
 
     // void emplaceBefore(const T& elem, iterator iter);
     // void emplaceAfter(const T& elem, iterator iter);
     // void emplaceBack(T&& ... args);
 
     // void erase(iterator iterator);
-    void clear();
 
     // add iterator and const iterator and reverse iterator
     // begin() and cbegin() and rbegin()
     // end() and cend() and rend()
+    /*
+        class iterator {
+        private:
+            T* current;
+
+        public:
+            iterator(T* pointer);
+            iterator(const const_iterator& iter);
+            iterator(const reverse_iterator& iter);
+
+            T& operator*();
+            T* operator->();
+
+            iterator& operator++();
+            iterator operator++(int);
+
+            iterator& operator+=(size_t offset);
+            iterator operator+(size_t offset);
+
+            iterator& operator-=(size_t offset);
+            iterator operator-(size_t offset);
+
+            bool operator==(const iterator& rhs);
+            bool operator!=(const iterator& rhs);
+        };*/
 
 private:
     void copy(const Vector& other);
-    void free();
     void move(Vector&& other);
+    void free();
 
 private:
-    T* data;
-    size_t count;
-    size_t capacity;
     Allocator allocator;
-    // todo add allocator
+
+    T* arr;
+    size_t size;
+    size_t capacity;
 };
 
-template <typename T>
-Vector<T>::Vector()
-    : Vector(8)
+template <typename T, typename Allocator>
+Vector<T, Allocator>::Vector()
+    : Vector(Constants::DEFAULT_SIZE)
 {
 }
 
-template <typename T>
-Vector<T>::Vector(size_t initialCapacity)
-    : data(nullptr)
-    , count(0)
-    , capacity(initialCapacity)
+template <typename T, typename Allocator>
+Vector<T, Allocator>::Vector(size_t initialSize)
+    : arr(allocator.allocate(initialSize))
+    , size(initialSize)
+    , capacity(initialSize)
 {
-    data = allocator.allocate(capacity);
+    for (size_t i = 0; i < initialSize; ++i)
+        allocator.construct(&arr[i]);
 }
 
-template <typename T>
-Vector<T>::Vector(const Vector& other)
-    : data(nullptr)
-    , count(0)
-    , capacity(8)
+template <typename T, typename Allocator>
+Vector<T, Allocator>::Vector(size_t initialSize, const T& initialObject)
+    : arr(allocator.allocate(initialSize))
+    , size(initialSize)
+    , capacity(initialSize)
+{
+    for (size_t i = 0; i < size; i++) {
+        allocator.destroy(&arr[i]);
+    }
+
+    size = 0;
+    for (size_t i = 0; i < initialSize; ++i)
+        allocator.construct(&arr[i], initialObject);
+}
+
+template <typename T, typename Allocator>
+Vector<T, Allocator>::Vector(const Vector<T, Allocator>& other)
 {
     copy(other);
 }
 
-template <typename T>
-Vector<T>::Vector(Vector&& other) noexcept
-    : data(nullptr)
-    , count(0)
-    , capacity(8)
+template <typename T, typename Allocator>
+Vector<T, Allocator>::Vector(Vector<T, Allocator>&& other) noexcept
 {
     move(std::move(other));
 }
 
-template <typename T>
-Vector<T>& Vector<T>::operator=(const Vector& other)
+template <typename T, typename Allocator>
+Vector<T, Allocator>& Vector<T, Allocator>::operator=(const Vector<T, Allocator>& other)
 {
     if (this != &other) {
         free();
@@ -98,8 +147,8 @@ Vector<T>& Vector<T>::operator=(const Vector& other)
     return *this;
 }
 
-template <typename T>
-Vector<T>& Vector<T>::operator=(Vector&& other) noexcept
+template <typename T, typename Allocator>
+Vector<T, Allocator>& Vector<T, Allocator>::operator=(Vector<T, Allocator>&& other) noexcept
 {
     if (this != &other) {
         free();
@@ -108,105 +157,180 @@ Vector<T>& Vector<T>::operator=(Vector&& other) noexcept
     return *this;
 }
 
-template <typename T>
-Vector<T>::~Vector()
+template <typename T, typename Allocator>
+Vector<T, Allocator>::~Vector()
 {
     free();
 }
 
-template <typename T>
-void Vector<T>::copy(const Vector<T>& other)
+template <typename T, typename Allocator>
+void Vector<T, Allocator>::copy(const Vector<T, Allocator>& other)
 {
-    T* temp = new T[other.capacity];
+    arr = allocator.allocate(other.capacity);
 
-    for (size_t i = 0; i < other.size(); ++i) {
-        temp[i] = other.data[i];
-    }
+    for (size_t i = 0; i < other.size; ++i)
+        allocator.construct(&arr[i], other.arr[i]);
 
-    delete[] this->data;
-    data = temp;
+    allocator.deallocate(arr, capacity);
 
-    count = other.count;
+    size = other.size;
     capacity = other.capacity;
 }
 
-template <typename T>
-void Vector<T>::free()
+template <typename T, typename Allocator>
+void Vector<T, Allocator>::free()
 {
-    delete[] data;
+    for (size_t i = 0; i < capacity; ++i)
+        allocator.destroy(&arr[i]);
+
+    allocator.deallocate(arr, capacity);
 }
 
-template <typename T>
-void Vector<T>::move(Vector<T>&& other)
+template <typename T, typename Allocator>
+void Vector<T, Allocator>::move(Vector<T, Allocator>&& other)
 {
-    data = other.data;
-    count = other.count;
+    arr = other.arr;
+    size = other.size;
     capacity = other.capacity;
 
-    other.data = nullptr;
-    other.count = 0;
+    other.arr = nullptr;
+    other.size = 0;
     other.capacity = 0;
 }
 
-template <typename T>
-void Vector<T>::clear()
+template <typename T, typename Allocator>
+T& Vector<T, Allocator>::operator[](size_t index)
 {
-    delete[] data;
-    count = 0;
-}
-
-template <typename T>
-T& operator[](size_t index)
-{
-    if (index > count)
+    if (index > this->size)
         throw std::out_of_range("Index is out of bounds");
 
-    return data[index];
+    return arr[index];
 }
 
-template <typename T>
-const T& operator[](size_t index) const
+template <typename T, typename Allocator>
+const T& Vector<T, Allocator>::operator[](size_t index) const
 {
-    if (index > count)
+    if (index > size)
         throw std::out_of_range("Index is out of bounds");
 
-    return data[index];
+    return arr[index];
 }
 
-template <typename T>
-void Vector<T>::push_back(const T& elem)
+template <typename T, typename Allocator>
+void Vector<T, Allocator>::push_back(const T& elem)
 {
-    if (count >= capacity)
-        resize(capacity * 2);
+    if (size >= capacity)
+        reserve(calculateCapacity());
 
-    data[count] = new T(elem);
-    ++count;
+    allocator.construct(&arr[size], elem);
+    ++size;
 }
 
-template <typename T>
-void Vector<T>::pop_back()
+template <typename T, typename Allocator>
+void Vector<T, Allocator>::push_back(T&& elem)
 {
-    if (count == 0)
+    if (size >= capacity)
+        reserve(calculateCapacity());
+
+    allocator.construct(&arr[size], std::move(elem));
+    ++size;
+}
+
+template <typename T, typename Allocator>
+void Vector<T, Allocator>::pop_back()
+{
+    if (size == 0)
         throw std::runtime_error("Cannot pop from empty array");
 
-    delete data[count];
-    data[count] = new T();
-    --count;
-
-    shrink_to_fit();
+    allocator.destroy(&arr[size]);
+    --size;
 }
 
-template <typename T>
-void Vector<T>::resize(size_t newCapacity)
+template <typename T, typename Allocator>
+void Vector<T, Allocator>::resize(size_t newSize)
 {
-    T* temp = new T[newCapacity];
+    if (newSize < size) {
+        for (size_t i = newSize; i < size; ++i)
+            allocator.destroy(&arr[i]);
 
-    for (size_t i = 0; i < size(); ++i) {
-        temp[i] = std::move(data[i]);
+        size = newSize;
+        return;
     }
 
-    delete[] this->data;
-    data = temp;
+    if (newSize == size)
+        return;
 
-    capacity = newCapacity;
+    if (newSize < capacity) {
+        for (size_t i = newSize; i < capacity; ++i)
+            allocator.construct(&arr[i]);
+
+        size = newSize;
+        return;
+    }
+
+    // if : newSize > capacity
+
+    T* temp = allocator.allocate(newSize);
+
+    for (size_t i = 0; i < size; ++i)
+        allocator.construct(&temp[i], std::move(arr[i]));
+
+    for (size_t i = size; i < newSize; ++i)
+        allocator.construct(&temp[i]);
+
+    allocator.deallocate(arr, capacity);
+
+    arr = temp;
+
+    capacity = newSize;
+    size = newSize;
+}
+
+template <typename T, typename Allocator>
+void Vector<T, Allocator>::reserve(size_t newCapacity)
+{
+    if (newCapacity <= capacity) // new capacity is ALWAYS > capacity
+        return;
+
+    T* temp = allocator.allocate(newCapacity); // always has MORE capacity
+
+    for (size_t i = 0; i < size; ++i)
+        allocator.construct(&temp[i], std::move(arr[i]));
+
+    allocator.deallocate(arr, capacity);
+    arr = temp;
+
+    capacity = newCapacity; // this is the whole point of the method, to expand the capacity MORE
+}
+
+template <typename T, typename Allocator>
+void Vector<T, Allocator>::shrink_to_fit()
+{
+    if (size == capacity) // size is NEVER > capacity
+        return;
+
+    T* temp = allocator.allocate(size); // always has LESS capacity
+
+    for (size_t i = 0; i < size; ++i)
+        allocator.construct(&temp[i], std::move(arr[i]));
+
+    allocator.deallocate(arr, capacity);
+    arr = temp;
+
+    capacity = size; // this is the point of the method, make the capacity as much as the size (it is LESS)
+}
+
+template <class T, class Allocator>
+size_t Vector<T, Allocator>::calculateCapacity() const
+{
+    return capacity > 0 ? capacity * Constants::GROWTH_FACTOR : 1;
+}
+
+template <class T, class Allocator>
+void Vector<T, Allocator>::clear()
+{
+    for (size_t i = 0; i < size; ++i)
+        allocator.destroy(&arr[i]);
+
+    size = 0;
 }
