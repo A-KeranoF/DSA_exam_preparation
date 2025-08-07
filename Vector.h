@@ -1,5 +1,8 @@
 #pragma once
 
+#include <memory>
+#include <stdexcept>
+
 namespace Constants {
 constexpr unsigned GROWTH_FACTOR = 2;
 constexpr unsigned DEFAULT_SIZE = 0;
@@ -33,6 +36,14 @@ public:
 
     size_t calculateCapacity() const;
 
+    T& front() { return arr[0]; }
+
+    const T& front() const { return arr[0]; }
+
+    T& back() { return arr[size - 1]; }
+
+    const T& back() const { return arr[size - 1]; }
+
     T& operator[](size_t index);
     const T& operator[](size_t index) const;
 
@@ -42,44 +53,310 @@ public:
 
     void clear();
 
-    // class iterator;
-    // class const_iterator;
-    // class reverse_iterator;
+    class iterator;
+    class const_iterator;
+    class reverse_iterator;
 
-    // void emplaceBefore(const T& elem, iterator iter);
-    // void emplaceAfter(const T& elem, iterator iter);
-    // void emplaceBack(T&& ... args);
+    template <typename... Args>
+    void emplaceBack(Args&&... args);
 
-    // void erase(iterator iterator);
+    void erase(iterator iterator);
+    void erase(iterator start, iterator end);
 
-    // add iterator and const iterator and reverse iterator
-    // begin() and cbegin() and rbegin()
-    // end() and cend() and rend()
-    /*
-        class iterator {
-        private:
-            T* current;
+    iterator begin() { return iterator(arr); }
+    iterator end() { return iterator(arr + size); }
 
-        public:
-            iterator(T* pointer);
-            iterator(const const_iterator& iter);
-            iterator(const reverse_iterator& iter);
+    const_iterator cbegin() const { return const_iterator(arr); }
+    const_iterator cend() const { return const_iterator(arr + size); }
 
-            T& operator*();
-            T* operator->();
+    reverse_iterator rbegin() { return size > 0 ? reverse_iterator(arr + size - 1) : reverse_iterator(nullptr); }
+    reverse_iterator rend() { return size > 0 ? reverse_iterator(arr - 1) : reverse_iterator(nullptr); }
 
-            iterator& operator++();
-            iterator operator++(int);
+    class iterator {
+    private:
+        T* current;
 
-            iterator& operator+=(size_t offset);
-            iterator operator+(size_t offset);
+    public:
+        iterator(T* pointer)
+            : current(pointer)
+        {
+        }
 
-            iterator& operator-=(size_t offset);
-            iterator operator-(size_t offset);
+        iterator(T* pointer, size_t offset)
+            : current(pointer + offset)
+        {
+        }
 
-            bool operator==(const iterator& rhs);
-            bool operator!=(const iterator& rhs);
-        };*/
+        T* operator->()
+        {
+            return current;
+        }
+
+        T& operator*()
+        {
+            return *(current);
+        }
+
+        iterator& operator++()
+        {
+            ++current;
+            return *this;
+        }
+
+        iterator operator++(int)
+        {
+            iterator it = *this;
+            ++(*this);
+            return it;
+        }
+
+        iterator& operator--()
+        {
+            --current;
+            return *this;
+        }
+
+        iterator operator--(int)
+        {
+            iterator it = *this;
+            --(*this);
+            return it;
+        }
+
+        iterator& operator+=(int offset)
+        {
+            current += offset;
+            return this;
+        }
+
+        iterator& operator-=(int offset)
+        {
+            current -= offset;
+            return this;
+        }
+
+        iterator operator+(int offset) const
+
+        {
+            return { current + offset };
+        }
+
+        iterator& operator-(int offset) const
+
+        {
+            return { current - offset };
+        }
+
+        operator const_iterator() const
+        {
+            return const_iterator(current);
+        }
+
+        operator reverse_iterator() const
+        {
+            return reverse_iterator(current);
+        }
+
+        bool operator==(const iterator& rhs) const
+
+        {
+            return current == rhs.current;
+        }
+
+        bool operator!=(const iterator& rhs) const
+
+        {
+            return !(*this == rhs);
+        }
+    };
+
+    class const_iterator {
+    private:
+        T* current;
+
+    public:
+        const_iterator(T* pointer)
+            : current(pointer)
+        {
+        }
+
+        const_iterator(T* pointer, size_t offset)
+            : current(pointer + offset)
+        {
+        }
+
+        const T* operator->() const
+        {
+            return current;
+        }
+
+        const T& operator*() const
+        {
+            return *(current);
+        }
+
+        const_iterator& operator++()
+        {
+            ++current;
+            return *this;
+        }
+
+        const_iterator operator++(int)
+        {
+            const_iterator it = *this;
+            ++(*this);
+            return it;
+        }
+
+        const_iterator& operator--()
+        {
+            --current;
+            return *this;
+        }
+
+        const_iterator operator--(int)
+        {
+            const_iterator it = *this;
+            --(*this);
+            return it;
+        }
+
+        const_iterator& operator+=(int offset)
+        {
+            current += offset;
+            return this;
+        }
+
+        const_iterator& operator-=(int offset)
+        {
+            current -= offset;
+            return this;
+        }
+
+        const_iterator operator+(int offset) const
+        {
+            return { current + offset };
+        }
+
+        const_iterator operator-(int offset) const
+        {
+            return { current - offset };
+        }
+
+        operator iterator() const
+        {
+            return iterator(current);
+        }
+
+        operator reverse_iterator() const
+        {
+            return reverse_iterator(current);
+        }
+
+        bool operator==(const const_iterator& rhs) const
+        {
+            return current == rhs.current;
+        }
+
+        bool operator!=(const const_iterator& rhs) const
+        {
+            return !(*this == rhs);
+        }
+    };
+
+    class reverse_iterator {
+    private:
+        T* current;
+
+    public:
+        reverse_iterator(T* pointer)
+            : current(pointer)
+        {
+        }
+
+        reverse_iterator(T* pointer, size_t offset)
+            : current(pointer + offset)
+        {
+        }
+
+        T* operator->()
+        {
+            return current;
+        }
+
+        T& operator*()
+        {
+            return *(current);
+        }
+
+        reverse_iterator& operator++()
+        {
+            --current;
+            return *this;
+        }
+
+        reverse_iterator operator++(int)
+        {
+            reverse_iterator it = *this;
+            --(*this);
+            return it;
+        }
+
+        reverse_iterator& operator--()
+        {
+            ++current;
+            return *this;
+        }
+
+        reverse_iterator operator--(int)
+        {
+            reverse_iterator it = *this;
+            --(*this);
+            return it;
+        }
+
+        reverse_iterator& operator+=(int offset)
+        {
+            current -= offset;
+            return this;
+        }
+
+        reverse_iterator& operator-=(int offset)
+        {
+            current += offset;
+            return this;
+        }
+
+        reverse_iterator operator+(int offset) const
+        {
+            return { current - offset };
+        }
+
+        reverse_iterator& operator-(int offset) const
+        {
+            return { current + offset };
+        }
+
+        operator iterator() const
+        {
+            return iterator(current);
+        }
+
+        operator const_iterator() const
+        {
+            return const_iterator(current);
+        }
+
+        bool operator==(const reverse_iterator& rhs)
+        {
+            return current == rhs.current;
+        }
+
+        bool operator!=(const reverse_iterator& rhs)
+        {
+            return !(*this == rhs);
+        }
+    };
 
 private:
     void copy(const Vector& other);
@@ -239,10 +516,10 @@ void Vector<T, Allocator>::push_back(T&& elem)
 template <typename T, typename Allocator>
 void Vector<T, Allocator>::pop_back()
 {
-    if (size == 0)
+    if (empty())
         throw std::runtime_error("Cannot pop from empty array");
 
-    allocator.destroy(&arr[size]);
+    allocator.destroy(arr + size - 1);
     --size;
 }
 
@@ -333,4 +610,44 @@ void Vector<T, Allocator>::clear()
         allocator.destroy(&arr[i]);
 
     size = 0;
+}
+
+template <class T, class Allocator>
+void Vector<T, Allocator>::erase(Vector<T, Allocator>::iterator position)
+{
+    erase(position, position + 1);
+}
+
+template <class T, class Allocator>
+void Vector<T, Allocator>::erase(Vector<T, Allocator>::iterator start, Vector<T, Allocator>::iterator end)
+{
+    int deletedCount = end - start;
+
+    if (deletedCount <= 0)
+        return;
+
+    int beginOffset = start - begin();
+    int endOffset = end - begin();
+
+    if (end != cend()) {
+        size_t index = beginOffset;
+        for (size_t i = endOffset; i < size; ++i)
+            arr[index++] = std::move(arr[i]);
+        // from start to end we just rewrite the elements by copying the remaining elements from the endIter to size
+    }
+
+    for (size_t i = size - deletedCount; i < size; ++i)
+        allocator.destroy(arr + i); // clean the duplicates that have "now" been "pulled back"
+
+    size -= deletedCount;
+}
+
+template <class T, class Allocator>
+template <typename... Args>
+void Vector<T, Allocator>::emplaceBack(Args&&... args)
+{
+    if (size >= capacity)
+        reserve(calculateCapacity());
+
+    allocator.construct(arr + size++, std::forward<Args>(args)...);
 }
