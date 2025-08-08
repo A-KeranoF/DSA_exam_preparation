@@ -179,6 +179,7 @@ void LinkedStack<T>::free()
         current = current->next;
         delete toDelete;
     }
+    _head = nullptr;
 }
 
 template <typename T>
