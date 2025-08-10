@@ -1,8 +1,15 @@
 #pragma once
 
 #include <list>
-#include <pair>
+#include <stdexcept>
+#include <utility>
 #include <vector>
+
+namespace HashMapConstants {
+constexpr double INIT_LOAD_FACTOR = 0.7;
+constexpr size_t INIT_CAPACITY = 16;
+constexpr size_t GROWTH_FACTOR = 2;
+};
 
 template <typename Key, typename Value, typename Hasher>
 class UnorderedMap {
@@ -12,11 +19,11 @@ public:
     typedef DataListIterator Bucket;
 
     UnorderedMap()
-        : UnorderedMap(16, 0.7)
+        : UnorderedMap(HashMapConstants::INIT_CAPACITY, HashMapConstants::INIT_LOAD_FACTOR)
     {
     }
 
-    UnorderedMap(size_t initialCapacity, unsigned double loadFactor)
+    UnorderedMap(size_t initialCapacity, double loadFactor)
         : collisionBuckets(initialCapacity)
         , loadFactor(loadFactor)
     {
@@ -27,7 +34,7 @@ public:
     {
         // reset buckets if needed
         if (collisionBuckets.empty())
-            collisionBuckets.resize(16, data.end())); // O(n), rarely happens // this is not proper initialization of the list
+            collisionBuckets.resize(HashMapConstants::INIT_CAPACITY, data.end()); // O(n), rarely happens // this is not proper initialization of the list
 
         DataListIterator iter = getCollisionIterator(key); // amortized O(const)
 
@@ -41,7 +48,7 @@ public:
 
         if (data.size() >= loadFactor * collisionBuckets.size()) // amortized O(const) since it rarely happens
         {
-            resize(2 * collisionBuckets.size; // O(n)
+            resize(HashMapConstants::GROWTH_FACTOR * collisionBuckets.size()); // O(n)
             iter = getCollisionIterator(key); // refresh the iterator // O(n)
         }
 
@@ -78,7 +85,7 @@ public:
     bool contains(Key key) const
     {
         try {
-            get(key)
+            get(key);
         } catch (std::runtime_error& e) {
             return false;
         }
@@ -136,21 +143,16 @@ private:
     // worst case: O(n) but it should be VERY small anyway
     DataListIterator getCollisionIterator(Key key)
     {
-        size_t chainIndex = hashIndex(key); // O(1)
+        size_t bucketIndex = hashIndex(key); // O(1)
 
-        Bucket& chain = collisionBuckets[bucketIndex]; // why the fuck is there a reference? //O(1)
+        Bucket& chain = collisionBuckets[bucketIndex]; // we use reference because we want the chain itself, not a perishable copy //O(1)
 
         if (chain.empty()) // O(1)
             return data.end();
 
-        for (DataListIterator iter = collisionBuckets[index].begin();
-            iter != collisionBuckets[index].end();
-            ++iter) // O(n), but should be small
-        {
-            if (iter->first == key) {
+        for (DataListIterator iter = chain.begin(); iter != chain.end(); ++iter) // O(n), but should be small
+            if (iter->first == key)
                 return iter;
-            }
-        }
 
         return data.end();
     }

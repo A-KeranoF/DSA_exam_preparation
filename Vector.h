@@ -3,7 +3,7 @@
 #include <memory>
 #include <stdexcept>
 
-namespace Constants {
+namespace VectorConstants {
 constexpr unsigned GROWTH_FACTOR = 2;
 constexpr unsigned DEFAULT_SIZE = 0;
 }
@@ -373,7 +373,7 @@ private:
 
 template <typename T, typename Allocator>
 Vector<T, Allocator>::Vector()
-    : Vector(Constants::DEFAULT_SIZE)
+    : Vector(VectorConstants::DEFAULT_SIZE)
 {
 }
 
@@ -600,7 +600,7 @@ void Vector<T, Allocator>::shrink_to_fit()
 template <class T, class Allocator>
 size_t Vector<T, Allocator>::calculateCapacity() const
 {
-    return capacity > 0 ? capacity * Constants::GROWTH_FACTOR : 1;
+    return capacity > 0 ? capacity * VectorConstants::GROWTH_FACTOR : 1;
 }
 
 template <class T, class Allocator>

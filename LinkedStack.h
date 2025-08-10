@@ -16,13 +16,13 @@ class LinkedStack {
     };
 
 public:
-    LinkedStack();
+    LinkedStack() = default;
 
-    LinkedStack(const LinkedStack& other);
-    LinkedStack& operator=(const LinkedStack& other);
+    LinkedStack(const LinkedStack<T>& other);
+    LinkedStack<T>& operator=(const LinkedStack<T>& other);
 
-    LinkedStack(LinkedStack&& other) noexcept;
-    LinkedStack& operator=(LinkedStack&& other) noexcept;
+    LinkedStack(LinkedStack<T>&& other) noexcept;
+    LinkedStack<T>& operator=(LinkedStack<T>&& other) noexcept;
 
     ~LinkedStack();
 
@@ -30,10 +30,10 @@ public:
     T& top();
     const T& top() const;
 
-    void push(const T& element);
-    void push(T&& element);
+    void pushFront(const T& element);
+    void pushFront(T&& element);
 
-    void pop();
+    void popFront();
 
     bool empty() const;
     size_t size() const;
@@ -74,13 +74,13 @@ LinkedStack<T>& LinkedStack<T>::operator=(const LinkedStack<T>& other)
 }
 
 template <typename T>
-LinkedStack<T>::LinkedStack(LinkedStack&& other) noexcept
+LinkedStack<T>::LinkedStack(LinkedStack<T>&& other) noexcept
 {
     move(std::move(other));
 }
 
 template <typename T>
-LinkedStack<T>& LinkedStack<T>::operator=(LinkedStack&& other) noexcept
+LinkedStack<T>& LinkedStack<T>::operator=(LinkedStack<T>&& other) noexcept
 {
     if (this != &other) {
         free();
@@ -114,21 +114,21 @@ const T& LinkedStack<T>::top() const
 }
 
 template <typename T>
-void LinkedStack<T>::push(const T& element)
+void LinkedStack<T>::pushFront(const T& element)
 {
     _head = new Node(element, _head);
     ++_size;
 }
 
 template <typename T>
-void LinkedStack<T>::push(T&& element)
+void LinkedStack<T>::pushFront(T&& element)
 {
     _head = new Node(std::move(element), _head);
     ++_size;
 }
 
 template <typename T>
-void LinkedStack<T>::pop()
+void LinkedStack<T>::popFront()
 {
     if (!_head)
         throw std::runtime_error("Stack is empty.");
@@ -158,7 +158,8 @@ void LinkedStack<T>::copy(const LinkedStack<T>& other)
         return;
 
     Node* otherCurrent = other._head;
-    Node* thisCurrent = _head = new Node(otherCurrent->data);
+    _head = new Node(otherCurrent->data);
+    Node* thisCurrent = _head;
 
     while (otherCurrent) {
         otherCurrent = otherCurrent->next;
@@ -168,6 +169,7 @@ void LinkedStack<T>::copy(const LinkedStack<T>& other)
             thisCurrent = thisCurrent->next;
         }
     }
+    _size = other._size;
 }
 
 template <typename T>
