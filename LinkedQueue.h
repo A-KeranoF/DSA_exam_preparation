@@ -174,14 +174,6 @@ void LinkedQueue<T>::move(LinkedQueue<T>&& other)
 template <typename T>
 void LinkedQueue<T>::free()
 {
-    // either just use this two-liner XOR the snippet below, difference is changing the size
-    // while (sz > 0)
-    //     popFront();
-
-    while (head) {
-        Node* toDelete = current;
-        current = current->next;
-        delete toDelete;
-    }
-    head = tail = nullptr;
+    while (!empty())
+        popFront();
 }

@@ -16,7 +16,7 @@ class LinkedStack {
     };
 
 public:
-    LinkedStack() = default;
+    LinkedStack();
 
     LinkedStack(const LinkedStack<T>& other);
     LinkedStack<T>& operator=(const LinkedStack<T>& other);
