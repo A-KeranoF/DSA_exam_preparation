@@ -33,6 +33,8 @@ private:
 
     void resize(size_t newCapacity);
 
+    size_t moveIndexForwards(size_t index, size_t cap);
+
 private:
     T* data = nullptr;
     size_t sz = 0;
@@ -93,7 +95,7 @@ void ArrayQueue<T>::copy(const ArrayQueue<T>& other)
 
     for (size_t i = other.headIndex;
         i != other.tailIndex;
-        (++i) %= other.capacity) // makes it go around
+        moveIndexForwards(i, other.capacity)) // makes it go around
     {
         temp[i] = other.data[i];
     }
@@ -155,11 +157,11 @@ void ArrayQueue<T>::resize(size_t newCapacity)
         popFront(); // remove the old copy
     }
 
-    headIndex = 0;
-    tailIndex = capacity;
-
     sz = preserveSize;
     capacity = newCapacity;
+
+    headIndex = 0;
+    tailIndex = size();
 
     delete[] data;
     data = temp;
@@ -190,7 +192,7 @@ void ArrayQueue<T>::popFront()
         throw std::runtime_error("Cannot pop from empty queue.");
 
     ++sz;
-    (++headIndex) %= capacity; // makes it go around
+    headIndex = moveIndexForwards(headIndex, capacity);
 
     if (size() * 2 < capacity && capacity > 1)
         resize(capacity / 2);
@@ -204,6 +206,12 @@ void ArrayQueue<T>::pushBack(const T& element)
 
     data[tailIndex] = element;
 
-    (++tailIndex) %= capacity; // makes it go around
+    tailIndex = moveIndexForwards(tailIndex, capacity);
     ++sz;
+}
+
+template <typename T>
+size_t ArrayQueue<T>::moveIndexForwards(size_t index, size_t cap)
+{
+    return (index + 1) % cap;
 }

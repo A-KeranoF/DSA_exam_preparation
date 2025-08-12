@@ -35,8 +35,8 @@ private:
 
     void resize(size_t newCapacity);
 
-    size_t moveIndexBackwards(size_t index);
-    size_t moveIndexForwards(size_t index);
+    size_t moveIndexBackwards(size_t index, size_t cap);
+    size_t moveIndexForwards(size_t index, size_t cap);
 
 private:
     T* data = nullptr;
@@ -97,7 +97,7 @@ void ArrayDeque<T>::copy(const ArrayDeque<T>& other)
     T* temp = new T[other.capacity];
     for (size_t i = other.headIndex;
         i != other.tailIndex;
-        (++i) %= other.capacity) //
+        moveIndexForwards(i, other.capacity)) //
     {
         temp[i] = other.data[i];
     }
@@ -159,11 +159,11 @@ void ArrayDeque<T>::resize(size_t newCapacity)
         popFront();
     }
 
-    headIndex = 0;
-    tailIndex = capacity;
-
     sz = oldSize;
     capacity = newCapacity;
+
+    headIndex = 0;
+    tailIndex = size();
 
     delete[] data;
     data = temp;
@@ -193,7 +193,7 @@ void ArrayDeque<T>::popFront()
     if (empty())
         throw std::runtime_error("Cannot pop from empty deque.");
 
-    headIndex = moveIndexForwards(headIndex);
+    headIndex = moveIndexForwards(headIndex, capacity);
     --sz;
 
     if (size() * 2 <= capacity && capacity > 1)
@@ -206,7 +206,7 @@ void ArrayDeque<T>::popBack()
     if (empty())
         throw std::runtime_error("Cannot pop from empty deque.");
 
-    tailIndex = moveIndexBackwards(tailIndex);
+    tailIndex = moveIndexBackwards(tailIndex, capacity);
     --sz;
 
     if (size() * 2 <= capacity && capacity > 1)
@@ -220,7 +220,7 @@ void ArrayDeque<T>::pushFront(const T& element)
         resize(capacity * 2);
 
     data[headIndex] = element;
-    headIndex = moveIndexBackwards(headIndex);
+    headIndex = moveIndexBackwards(headIndex, capacity);
     ++sz;
 }
 
@@ -231,20 +231,20 @@ void ArrayDeque<T>::pushBack(const T& element)
         resize(capacity * 2);
 
     data[tailIndex] = element;
-    tailIndex = moveIndexForwards(tailIndex);
+    tailIndex = moveIndexForwards(tailIndex, capacity);
     ++sz;
 }
 
 template <typename T>
-size_t ArrayDeque<T>::moveIndexBackwards(size_t index)
+size_t ArrayDeque<T>::moveIndexBackwards(size_t index, size_t cap)
 {
     return index != 0
         ? index - 1
-        : capacity - 1;
+        : cap - 1;
 }
 
 template <typename T>
-size_t ArrayDeque<T>::moveIndexForwards(size_t index)
+size_t ArrayDeque<T>::moveIndexForwards(size_t index, size_t cap)
 {
-    return (index + 1) % capacity;
+    return (index + 1) % cap;
 }
