@@ -126,7 +126,54 @@ namespace merge_sort {
     }
 }
 
-// namespace quick_sort {}
+namespace quick_sort {
+
+    template <typename T>
+    size_t quickSortPartition(T* arr, size_t size)
+    {
+        // different people decide on different pivots, in this case - the pivot is the last element - a popular choice apparently
+        T& pivotValue = arr[size - 1];
+
+        // indexes that help find and put elements on the according sides compared to pivot
+        // (left - smaller elements, right - bigger elements)
+        size_t left = 0;
+        size_t right = size; // it is outside the array, but inside the initial corresponding while loop it will go into its correct place
+
+        while (true) {
+            // find the first bigger element than the pivot on the left of the pivot where the pivot will go later
+            while (arr[++left] > pivotValue)
+                ;
+
+            // find the first smaller element than the pivot on the right of the pivot where the pivot will go later
+            while (arr[--right] < pivotValue)
+                if (left == right) // if they point to the same place, there is no need "right" index to procceed
+                    break;
+
+            if (left >= right) // if they happen to pass by each other, we have found where the pivot is supposed to be, thus stop traversing
+                break;
+
+            // put bigger element on the right of future pivot, put smaller element on the left of future pivot
+            std::swap(arr[left], arr[right]);
+        }
+
+        std::swap(arr[left], pivotValue); // put pivot where it belongs
+
+        return left; // this is now the position of the pivot;
+    }
+
+    template <typename T>
+    void quickSort(T* arr, size_t size)
+    {
+        if (size < 2)
+            return;
+
+        size_t pivotIndex = quickSortPartition(arr, size);
+
+        quickSort(arr, pivotIndex);
+        quickSort(arr + pivotIndex, size - pivotIndex);
+    }
+
+}
 
 } // divide_conquer_sorting_algorithms
 
@@ -157,6 +204,7 @@ void countingSort(std::vector<int>& vect)
     for (size_t i = 1; i < countArr.size(); ++i)
         countArr[i] += countArr[i - 1];
 
+    // traverse in reverse order, insert grouped elements in descending order
     for (size_t i = vect.size() - 1; i >= 0; --i) //
     {
         size_t countIndex = vect[i - min];
@@ -172,6 +220,8 @@ void countingSort(std::vector<int>& vect)
 
     vect = result;
 } // countingSort
+
+// namespace heap_sort {}
 
 } // other_sorting_algorithms
 
