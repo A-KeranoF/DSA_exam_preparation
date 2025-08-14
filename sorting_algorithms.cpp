@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <vector>
 
+using std::swap;
+
 namespace simple_sorting_algorithms {
 
 template <typename T>
@@ -15,7 +17,7 @@ void bubbleSortVector(std::vector<T>& vect)
         for (size_t j = 0; j < lastSortedElement; ++j) //
         {
             if (vect[j] > vect[j + 1])
-                std::swap(vect[j], vect[j + 1]);
+                swap(vect[j], vect[j + 1]);
 
             currentLastSorted = j; // if it doesnt change it means everything is sorted
         }
@@ -61,7 +63,7 @@ void selectionSortVector(std::vector<T>& vect)
                 minIndex = j;
 
         if (i != minIndex)
-            std::swap(vect[i], vect[minIndex]);
+            swap(vect[i], vect[minIndex]);
     }
 } // selectionSortVector
 
@@ -153,10 +155,10 @@ namespace quick_sort {
                 break;
 
             // put bigger element on the right of future pivot, put smaller element on the left of future pivot
-            std::swap(arr[left], arr[right]);
+            swap(arr[left], arr[right]);
         }
 
-        std::swap(arr[left], pivotValue); // put pivot where it belongs
+        swap(arr[left], pivotValue); // put pivot where it belongs
 
         return left; // this is now the position of the pivot;
     }
@@ -207,9 +209,10 @@ void countingSort(std::vector<int>& vect)
     // traverse in reverse order, insert grouped elements in descending order
     for (size_t i = vect.size() - 1; i >= 0; --i) //
     {
-        size_t countIndex = vect[i - min];
+        size_t countIndex = vect[i] - min;
 
-        size_t resultIndex = countArr[countIndex]; // find associated max index
+        size_t resultIndex = countArr[countIndex] - 1; // find associated max index.
+        // subtracting the "ONE" because it has been added in the max - min equation for the size of counting array
 
         // put current element from origin to result in corresponding place from the end to beginning
         result[resultIndex] = vect[i];
@@ -218,7 +221,7 @@ void countingSort(std::vector<int>& vect)
         --countArr[countIndex];
     }
 
-    vect = result;
+    vect = std::move(result);
 } // countingSort
 
 // namespace heap_sort {}
