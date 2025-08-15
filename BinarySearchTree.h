@@ -26,11 +26,9 @@ public:
     }
 
     BinarySearchTree(const BinarySearchTree& other)
-        : _root(nullptr)
+        : _root(copy(other._root))
         , _size(other._size)
     {
-        _root = copy(other._root);
-        this->_size = other._size;
     }
 
     BinarySearchTree& operator=(const BinarySearchTree& other)
@@ -68,7 +66,7 @@ public:
         {
             Node* top = _stack.top();
             _stack.pop();
-            pushLeft(top);
+            pushLeft(top->_right); // this is because we need to traverse the tree in-order "style"
             return *this;
         }
 
@@ -116,9 +114,9 @@ public:
                 return false; // already exists
         }
 
-        // this line here is the reason we use double pointer - since we point to an already existing pointer of a node,
-        // we just "put" a new node there, instead of making checks if the next node is nullptr.
-        // Again, we just insert a new node into already pointed at place in memory by some other nodes
+        // this line here is the reason we use double pointer - since current is a pointer to the LEFT/RIGHT pointer,
+        // we just make this LEFT/RIGHT pointer to point to new existing element,
+        // instead of traversing anew if current was of type Node* instead of Node**
         *current = new Node(data);
         ++_size;
         return true;
@@ -142,7 +140,7 @@ public:
     {
         Node** current = &_root;
 
-        // traverse to find the node
+        // traverse to find a left/right pointer pointing to target node
         while (*current) {
             if (data < *current->_data)
                 current = &*current->_left;
@@ -152,13 +150,13 @@ public:
                 break; // aproximate place
         }
 
-        // element not found
+        // element not found, (LEFT/RIGHT pointer points to nullptr => current is being inside of a leaf)
         if (!*current)
             return false;
 
-        // make sure the tree is intact after removing inner nodes
         Node* toDelete = *current;
 
+        // make sure the tree is intact after removing inner nodes
         if (!*current->_left && !*current->_left) // its a leaf, just forget it
             *current = nullptr;
         else if (!*current->_right) // only left child
@@ -169,16 +167,20 @@ public:
         {
             // this is literally the next in place node after the one we remove, so we try to put it into current
             Node** rightMin = findMinNode(&*current->_right);
+            // or use the other findMinNode(current->_right) (i am not 100% sure the argument should be like that)
 
             *current = *rightMin; // reroute pointing to the lowest element now
-            *rightMin = *rightMin->_right; // preserve order in the place we just "yoinked the newest next in order element from", since rightMin element might have some bigger elements after itself
+            *rightMin = *rightMin->_right;
+            // preserve order in the place we just "yoinked the newest next in order element from",
+            // since rightMin element might have some bigger elements after itself
 
-            // since current is now the moved next in line min element, we need to reroute its pointers to preserve the surrounding tree nodes
+            // since current is now POINTING TO the moved next in line min element,
+            // we need to reroute the pointers (left/right) of the node that is being pointed by current,
+            // to preserve the surrounding tree nodes
             *current->_left = toDelete->_left;
             *current->_right = toDelete->_right;
         }
 
-        // actual delete
         delete toDelete;
         --_size;
         return true;
@@ -220,6 +222,16 @@ private:
 
         return current;
     }
+
+    //     Node** findMinNode(Node* node)
+    //     {
+    //         Node* current = node;
+    //
+    //         while (current->_left)
+    //             current = *current->_left;
+    //
+    //         return &current;
+    //     }
 
 private:
     Node* _root;
