@@ -157,7 +157,7 @@ public:
         Node* toDelete = *current;
 
         // make sure the tree is intact after removing inner nodes
-        if (!*current->_left && !*current->_left) // its a leaf, just forget it
+        if (!*current->_left && !*current->_right) // its a leaf, just forget it
             *current = nullptr;
         else if (!*current->_right) // only left child
             *current = *current->_left; // just move the pointers one up
