@@ -106,14 +106,14 @@ public:
 
         auto bucketIterator = getBucketIterator(element, bucket);
 
-        // since bucket.end() and data.end() are basically "nothing",
+        // Since bucket.end() (and data.end()) is (are) basically "nothing"/"non-existing element",
         // semantically we can say they are the same and this can check if we found the element
-        // without using contains() or getIterator() which can slow the program by half otherwise.
-        // This is how we can use to remove the element from the data list and its iterator from bucket
+        // without using contains() method or getDataIterator() method, which can slow the program by half otherwise.
         if (bucketIterator == bucket.end())
             return false;
 
-        data.erase(*bucketIterator);
+        // This is how we can use the very iterator to remove the element from the data list and its iterator from bucket
+        data.erase(*bucketIterator); // basically DataIterator, which is what this method requires
         bucket.erase(bucketIterator);
         --sz;
 
@@ -141,11 +141,13 @@ private:
         auto bucketIterator = bucket.begin();
 
         while (bucketIterator != bucket.end()) {
-            if (*bucketIterator == element)
+            if (**bucketIterator == element)
                 break;
 
             ++bucketIterator;
         }
+
+        // this way we can point to bucket.end() that we can use as a placeholder for "nothing"/"non-existing element"
 
         return bucketIterator;
     }
