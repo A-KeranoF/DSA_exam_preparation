@@ -13,92 +13,112 @@ constexpr size_t GROWTH_FACTOR = 2;
 
 template <typename T, typename Hasher = std::hash<T>>
 class UnorderedSet {
-public:
-    typedef typename std::list<T>::iterator DataListIterator;
-    typedef DataListIterator Bucket;
+    typedef typename std::list<T>::iterator DataIterator;
+    typedef std::list<DataIterator> BucketOfDataIterators;
 
+public:
     UnorderedSet()
         : UnorderedSet(HashSetConstants::INIT_CAPACITY, HashSetConstants::INIT_LOAD_FACTOR)
     {
     }
 
-    UnorderedSet(size_t initialCapacity, double loadFactor)
-        : collisionBuckets(initialCapacity)
+    UnorderedSet(size_t capacity, double loadFactor)
+        : cap(capacity)
         , loadFactor(loadFactor)
     {
-        if (loadFactor < 0)
-            throw std::invalid_argument("Cannot initialize set with negative load factor.");
+        if (loadFactor <= 0)
+            throw std::logic_error("Cannot initialize hash set with non-positive load factor");
     }
 
-    // Th(1), O(n)
-    std::pair<DataListIterator, bool> insert(const T& key)
+    void clear()
     {
-        // reset buckets if needed
-        if (collisionBuckets.empty())
-            collisionBuckets.resize(HashSetConstants::INIT_CAPACITY, data.end()); // Th(n), rarely happens
-
-        DataListIterator iter = getCollisionIterator(key); // Th(1), O(n)
-
-        // check if element already exists
-        if (iter != data.end()) // O(1)
-            return std::make_pair(iter, false);
-
-        // actual insert
-        data.push_back(key); // O(1)
-        collisionBuckets[hashIndex(key)].push_back(--data.end()); // O(1)
-
-        if (size() >= load_factor() * bucket_count()) // Th(1), O(n) since it rarely happens
-        {
-            resize(calculateNewCapacity()); // Th(n)
-            iter = getCollisionIterator(key); // refresh the iterator // Th(1), O(n)
-        }
-
-        return std::make_pair(iter, true); // Th(1)
+        collisionBuckets.clear();
+        sz = 0;
     }
 
-    // Th(1), O(n)
-    bool contains(const T& key) const
+    double load_factor() const { return loadFactor; }
+
+    size_t size() const { return sz; }
+    size_t capacity() const { return cap; }
+
+    bool empty() const { return sz == 0; }
+
+    bool insert(const T& element)
     {
-        if (data.empty())
+        size_t bucketIndex = getBucketIndex(element);
+        BucketOfDataIterators& bucket = collisionBuckets[bucketIndex];
+
+        auto bucketIterator = getBucketIterator(element, bucket);
+
+        if (bucketIterator != bucket.end())
             return false;
 
-        DataListIterator iter = getCollisionIterator(key);
-        if (iter != data.end())
-            return true;
+        data.push_back(element);
+        bucket.push_back(--data.end()); // since the new element is pushed in the end, we just get exactly that place as an iterator
+        ++sz;
 
-        return false;
-    }
-
-    // Th(1), O(n)
-    bool remove(const T& key)
-    {
-        if (data.empty())
-            return false;
-
-        DataListIterator iter = getCollisionIterator(key); // Th(1), O(n)
-
-        if (iter == data.end())
-            return false;
-
-        data.erase(iter); // O(1)
-        collisionBuckets[hashIndex(key)].erase(iter); // Th(1), O(n)
+        if (size() == HashSetConstants::INIT_LOAD_FACTOR * collisionBuckets.capacity())
+            resize(collisionBuckets.capacity() * HashSetConstants::GROWTH_FACTOR);
 
         return true;
     }
 
-    // O(n)
-    void clear()
+    bool insert(T&& element)
     {
-        data.clear();
-        collisionBuckets.clear();
+        size_t bucketIndex = getBucketIndex(element);
+        BucketOfDataIterators& bucket = collisionBuckets[bucketIndex];
+
+        auto bucketIterator = getBucketIterator(element, bucket);
+
+        if (bucketIterator != bucket.end())
+            return false;
+
+        data.push_back(std::move(element));
+        bucket.push_back(--data.end());
+        ++sz;
+
+        if (size() == HashSetConstants::INIT_LOAD_FACTOR * collisionBuckets.capacity())
+            resize(collisionBuckets.capacity() * HashSetConstants::GROWTH_FACTOR);
+
+        return true;
     }
 
-    bool empty() const { return data.empty(); }
-    size_t size() const { return data.size(); }
-    double load_factor() const { return loadFactor; }
-    size_t bucket_count() const { return collisionBuckets.size(); }
+    bool contains(const T& element) const
+    {
+        if (empty())
+            return false;
 
-    // Th(n)
+        size_t bucketIndex = getBucketIndex(element);
+        BucketOfDataIterators& bucket = collisionBuckets[bucketIndex];
+
+        auto bucketIterator = getBucketIterator(element, bucket);
+        return bucketIterator != bucket.end());
+    }
+
+    bool remove(const T& element)
+    {
+        if (empty())
+            return false;
+
+        size_t bucketIndex = getBucketIndex(element);
+        BucketOfDataIterators& bucket = collisionBuckets[bucketIndex];
+
+        auto bucketIterator = getBucketIterator(element, bucket);
+
+        // since bucket.end() and data.end() are basically "nothing",
+        // semantically we can say they are the same and this can check if we found the element
+        // without using contains() or getIterator() which can slow the program by half otherwise.
+        // This is how we can use to remove the element from the data list and its iterator from bucket
+        if (bucketIterator == bucket.end())
+            return false;
+
+        data.erase(*bucketIterator);
+        bucket.erase(bucketIterator);
+        --sz;
+
+        return true;
+    }
+
     void resize(size_t newCapacity)
     {
         collisionBuckets.clear();
@@ -109,41 +129,31 @@ public:
     }
 
 private:
-    size_t hashIndex(const T& elem) const
+    size_t getBucketIndex(const T& element) const
     {
-        return hasher(elem) % collisionBuckets.size();
+        return hash(element) % collisionBuckets.size();
     }
 
-    size_t calculateNewCapacity() const
+    typename BucketOfDataIterators::iterator getBucketIterator(const T& element, const BucketOfDataIterators& bucket)
     {
-        return bucket_count() > 0
-            ? bucket_count() * HashSetConstants::GROWTH_FACTOR
-            : HashSetConstants::INIT_CAPACITY;
-    }
+        auto bucketIterator = bucket.begin();
 
-    // Th(1), O(n)
-    DataListIterator getCollisionIterator(const T& key)
-    {
-        size_t chainIndex = hashIndex(key); // O(1)
+        while (bucketIterator != bucket.end()) {
+            if (*bucketIterator == element)
+                break;
 
-        Bucket& chain = collisionBuckets[chainIndex]; // why the fuck is there a reference? // O(1)
-
-        if (chain.empty()) // O(1)
-            return data.end();
-
-        for (DataListIterator iter = collisionBuckets[chainIndex].begin();
-            iter != collisionBuckets[chainIndex].end();
-            ++iter) // O(n), but should be small ~> O(1)
-        {
-            if (*iter == key)
-                return iter;
+            ++bucketIterator;
         }
 
-        return data.end();
+        return bucketIterator;
     }
 
     std::list<T> data;
-    std::vector<Bucket> collisionBuckets;
-    Hasher hasher;
-    double loadFactor;
+    std::vector<BucketOfDataIterators> collisionBuckets;
+
+    Hasher hash;
+
+    const double loadFactor;
+    size_t sz = 0;
+    size_t cap;
 };
