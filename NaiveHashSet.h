@@ -28,6 +28,7 @@ public:
                 return false;
 
         chain.push_back(element);
+        ++sz;
 
         if (size() == INIT_LOAD_FACTOR * collisionBuckets.capacity())
             resize(collisionBuckets.capacity() * GROWTH_FACTOR);
@@ -45,6 +46,8 @@ public:
                 return false;
 
         chain.push_back(std::move(element));
+
+        ++sz;
 
         if (size() == INIT_LOAD_FACTOR * collisionBuckets.capacity())
             resize(collisionBuckets.capacity() * GROWTH_FACTOR);
@@ -78,6 +81,7 @@ public:
         for (auto iter = chain.begin(); iter != chain.end(); ++iter) {
             if (*iter == element) {
                 chain.erase(iter);
+                --sz;
                 return true;
             }
         }
@@ -105,8 +109,6 @@ private:
 
     const double INIT_LOAD_FACTOR = 0.7;
     const size_t GROWTH_FACTOR = 2;
-
-    // typedef std::list<T> Bucket;
 
     std::vector<std::list<T>> collisionBuckets;
     Hasher hash;
