@@ -126,10 +126,15 @@ public:
     {
         collisionBuckets.clear();
         collisionBuckets.reserve(newCapacity);
-        sz = 0;
 
-        for (const T& element : data)
-            insert(element);
+        // changed from insert(eachElement) to directly copying an iterator
+        // because my previous method with inserting is duplicating data.
+        // i could have just copied the data and cleared it after, but this copying method is redundant
+        for (DataIterator dataIter = data.cbegin(); dataIter != data.cend(); ++dataIter) {
+            size_t bucketIndex = getBucketIndex(data.first);
+            Bucket& bucket = collisionBuckets[bucketIndex];
+            bucket.push_back(dataIter);
+        }
     }
 
 private:

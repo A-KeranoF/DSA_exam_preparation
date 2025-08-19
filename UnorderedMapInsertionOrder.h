@@ -1,6 +1,5 @@
 #pragma once
 
-#include <forward_list>
 #include <list>
 #include <stdexcept>
 #include <utility>
@@ -44,13 +43,15 @@ public:
     {
         collisionBuckets.clear();
         collisionBuckets.reserve(newCapacity);
-        sz = 0;
 
         if (capacity() == 0)
             return;
 
-        for (DataType&& element : data)
-            insert(element);
+        for (DataIterator dataIter = data.cbegin(); dataIter != data.cend(); ++dataIter) {
+            size_t bucketIndex = getBucketIndex(data.first);
+            Bucket& bucket = collisionBuckets[bucketIndex];
+            bucket.push_back(dataIter);
+        }
     }
 
     bool insert(const std::pair<K, V>& data)
@@ -208,7 +209,7 @@ private:
     typedef std::pair<K, V> DataType;
     typedef std::list<DataType> DataList;
     typedef typename DataList::iterator DataIterator;
-    typedef std::forward_list<DataIterator> Bucket;
+    typedef std::list<DataIterator> Bucket;
     typedef typename Bucket::iterator BucketIterator;
 
     size_t getBucketIndex(const K& key) const
