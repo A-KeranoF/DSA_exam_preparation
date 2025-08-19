@@ -145,31 +145,64 @@ size_t getTreeSize(Node* root)
     return 1 + getTreeSize(root->left) + getTreeSize(root->right);
 }
 
-// template <typename T>
-// bool checkIfTreeIsSetFromOneToN(Node* root, size_t n)
-// {
-//     if (!root)
-//         return false;
-// }
+template <>
+bool checkIfTreeIsSetFromOneToN(Node<size_t>* root, std::vector<bool>& visited)
+{
+    if (!root)
+        return true;
 
-// template <typename T>
-// ? getWordsFromTrie(Node* root, size_t n)
-// {
-//     if (!root)
-//         return ;
-// }
+    // it is not within bounds
+    if (root->data < 1 || root->data > visited.size())
+        return false;
+
+    // check for duplicates
+    if (visited[root->data - 1])
+        return false;
+
+    visited[root->data - 1] = true;
+
+    return checkIfTreeIsSetFromOneToNHelper(root->left, visited) && checkIfTreeIsSetFromOneToNHelper(root->right, visited);
+}
 
 template <>
-void printWordInKLevelOfTrieHelper(Node<char>* root, size_t k, size_t i)
+bool checkIfTreeIsSetFromOneToN(Node<size_t>* root)
+{
+    if (!root)
+        return true;
+
+    std::vector<bool> visited(getTreeSize(root));
+
+    return checkIfTreeIsSetFromOneToNHelper(root, visited);
+}
+
+template <>
+void printWordsFromRootToEveryLeafHelper(Node<char>* root, std::string& branch)
 {
     if (!root)
         return;
 
-    if (i == k)
-        std::cout << root->data;
+    branch.push_back(root->data);
 
-    printTreeBranchHelper(root->left, k, i + 1);
-    printTreeBranchHelper(root->right, k, i + 1);
+    if (!root->left && !root->right)
+        std::cout << branch << std::endl;
+
+    if (!root->left)
+        printWordsFromRootToEveryLeafHelper(root->right, branch);
+
+    if (!root->right)
+        printWordsFromRootToEveryLeafHelper(root->left, branch);
+
+    branch.pop_back();
+}
+
+template <>
+void printWordsFromRootToEveryLeaf(Node<char>* root)
+{
+    if (!root)
+        return;
+
+    std::string branch;
+    printWordsFromRootToEveryLeafHelper(root, branch);
 }
 
 template <>
@@ -178,7 +211,16 @@ void printWordInKLevelOfTrie(Node<char>* root, size_t k)
     if (!root)
         return;
 
-    printTreeBranchHelper(root, k, 1);
+    if (k == 0)
+        throw std::logic_error("Cannot print leaves from level 0");
 
-    std::cout << std::endl;
+    if (k == 1) {
+        std::cout << root->data;
+        return;
+    }
+
+    printWordInKLevelOfTrie(root->left, k - 1);
+    printWordInKLevelOfTrie(root->right, k - 1);
+
+    std::cout << std::flush;
 }

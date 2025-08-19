@@ -100,7 +100,6 @@ void ArrayQueue<T>::copy(const ArrayQueue<T>& other)
         temp[i] = other.data[i];
     }
 
-    delete[] data;
     data = temp;
 
     sz = other.sz;
@@ -115,9 +114,13 @@ void ArrayQueue<T>::move(ArrayQueue<T>&& other)
 {
     this->data = other.data;
     this->sz = other.sz;
+    this->capacity = other.capacity;
+
+    this->headIndex = other.headIndex;
+    this->tailIndex = other.tailIndex;
 
     other.data = nullptr;
-    other.sz = 0;
+    other.headIndex = other.tailIndex = other.sz = other.capacity = 0;
 }
 
 template <typename T>
