@@ -65,7 +65,7 @@ public:
             return false;
 
         data.pushFront(data);
-        bucket.pushFront(data.begin());
+        bucket.pushFront(--data.end());
         ++sz;
 
         if (current_load_factor() >= max_load_factor())
