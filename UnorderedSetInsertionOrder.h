@@ -26,7 +26,7 @@ public:
         : cap(capacity)
         , loadFactor(loadFactor)
     {
-        if (loadFactor <= 0)
+        if (loadFactor <= 0.0)
             throw std::logic_error("Cannot initialize hash set with non-positive load factor");
     }
 
@@ -58,8 +58,10 @@ public:
         bucket.push_back(--data.end()); // since the new element is pushed in the end, we just get exactly that place as an iterator
         ++sz;
 
-        if (size() == HashSetConstants::INIT_LOAD_FACTOR * collisionBuckets.capacity())
-            resize(collisionBuckets.capacity() * HashSetConstants::GROWTH_FACTOR);
+        if ((double)size() >= loadFactor * collisionBuckets.capacity())
+            resize(capacity() > 0
+                    ? collisionBuckets.capacity() * HashSetConstants::GROWTH_FACTOR
+                    : HashSetConstants::INIT_CAPACITY);
 
         return true;
     }
