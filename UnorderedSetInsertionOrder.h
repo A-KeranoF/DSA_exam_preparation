@@ -55,11 +55,11 @@ public:
             return false;
 
         data.push_back(element);
-        bucket.push_back(--data.end()); // since the new element is pushed in the end, we just get exactly that place as an iterator
+        bucket.push_front(--data.end()); // since the new element is pushed in the end, we just get exactly that place as an iterator
         ++sz;
 
         if ((double)size() >= loadFactor * collisionBuckets.capacity())
-            resize(capacity() > 0
+            resize(collisionBuckets.size() > 0
                     ? collisionBuckets.capacity() * HashSetConstants::GROWTH_FACTOR
                     : HashSetConstants::INIT_CAPACITY);
 
@@ -77,11 +77,13 @@ public:
             return false;
 
         data.push_back(std::move(element));
-        bucket.push_back(--data.end());
+        bucket.push_front(--data.end());
         ++sz;
 
-        if (size() == HashSetConstants::INIT_LOAD_FACTOR * collisionBuckets.capacity())
-            resize(collisionBuckets.capacity() * HashSetConstants::GROWTH_FACTOR);
+        if ((double)size() >= loadFactor * collisionBuckets.capacity())
+            resize(collisionBuckets.size() > 0
+                    ? collisionBuckets.capacity() * HashSetConstants::GROWTH_FACTOR
+                    : HashSetConstants::INIT_CAPACITY);
 
         return true;
     }
@@ -122,10 +124,10 @@ public:
         return true;
     }
 
-    void resize(size_t newCapacity)
+    void resize(size_t newBucketCount)
     {
         collisionBuckets.clear();
-        collisionBuckets.reserve(newCapacity);
+        collisionBuckets.resize(newBucketCount);
 
         // changed from insert(eachElement) to directly copying an iterator
         // because my previous method with inserting is duplicating data.

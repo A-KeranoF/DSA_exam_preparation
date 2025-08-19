@@ -36,22 +36,20 @@ public:
     double max_load_factor() const { return loadFactor; }
     double current_load_factor() const
     {
-        return static_cast<double>(data.size() / collisionBuckets.size());
+        return static_cast<double>(data.size())
+            / collisionBuckets.size();
     }
 
-    void resize(size_t newCapacity)
+    void resize(size_t newSize)
     {
         collisionBuckets.clear();
-        collisionBuckets.reserve(newCapacity);
+        collisionBuckets.resize(newSize);
 
         if (capacity() == 0)
             return;
 
-        for (DataIterator dataIter = data.cbegin(); dataIter != data.cend(); ++dataIter) {
-            size_t bucketIndex = getBucketIndex(data.first);
-            Bucket& bucket = collisionBuckets[bucketIndex];
-            bucket.push_back(dataIter);
-        }
+        for (DataIterator dataIter = data.cbegin(); dataIter != data.cend(); ++dataIter)
+            collisionBuckets[getBucketIndex(data.first)].push_back(dataIter);
     }
 
     bool insert(const std::pair<K, V>& data)
@@ -70,7 +68,7 @@ public:
         ++sz;
 
         if (current_load_factor() >= max_load_factor())
-            resize(calculateExpandingCapacity());
+            resize(calculateExpandingSize());
 
         return true;
     }
@@ -91,7 +89,7 @@ public:
         ++sz;
 
         if (current_load_factor() >= max_load_factor())
-            resize(calculateExpandingCapacity());
+            resize(calculateExpandingSize());
 
         return true;
     }
@@ -228,10 +226,10 @@ private:
         return bucketIterator;
     }
 
-    size_t calculateExpandingCapacity() const
+    size_t calculateExpandingSize() const
     {
-        return capacity() > 0
-            ? capacity() * HashMapConstants::GROWTH_FACTOR
+        return collisionBuckets.size() > 0
+            ? collisionBuckets.size() * HashMapConstants::GROWTH_FACTOR
             : INIT_CAPACITY;
     }
 
