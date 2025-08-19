@@ -7,7 +7,7 @@
 
 namespace HashSetConstants {
 constexpr double INIT_LOAD_FACTOR = 0.7;
-constexpr size_t INIT_CAPACITY = 16;
+constexpr size_t INIT_SIZE = 8;
 constexpr size_t GROWTH_FACTOR = 2;
 };
 
@@ -18,12 +18,12 @@ class UnorderedSetInsertionOrder {
 
 public:
     UnorderedSetInsertionOrder()
-        : UnorderedSetInsertionOrder(HashSetConstants::INIT_CAPACITY, HashSetConstants::INIT_LOAD_FACTOR)
+        : UnorderedSetInsertionOrder(HashSetConstants::INIT_SIZE, HashSetConstants::INIT_LOAD_FACTOR)
     {
     }
 
-    UnorderedSetInsertionOrder(size_t capacity, double loadFactor)
-        : cap(capacity)
+    UnorderedSetInsertionOrder(size_t initialSize, double loadFactor)
+        : collisionBuckets(initialSize)
         , loadFactor(loadFactor)
     {
         if (loadFactor <= 0.0)
@@ -61,7 +61,7 @@ public:
         if ((double)size() >= loadFactor * collisionBuckets.capacity())
             resize(collisionBuckets.size() > 0
                     ? collisionBuckets.capacity() * HashSetConstants::GROWTH_FACTOR
-                    : HashSetConstants::INIT_CAPACITY);
+                    : HashSetConstants::INIT_SIZE);
 
         return true;
     }
@@ -83,7 +83,7 @@ public:
         if ((double)size() >= loadFactor * collisionBuckets.capacity())
             resize(collisionBuckets.size() > 0
                     ? collisionBuckets.capacity() * HashSetConstants::GROWTH_FACTOR
-                    : HashSetConstants::INIT_CAPACITY);
+                    : HashSetConstants::INIT_SIZE);
 
         return true;
     }

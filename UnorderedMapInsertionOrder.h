@@ -7,16 +7,16 @@
 
 namespace HashMapConstants {
 constexpr double INIT_LOAD_FACTOR = 0.7;
-constexpr size_t INIT_CAPACITY = 16;
+constexpr size_t INIT_SIZE = 8;
 constexpr size_t GROWTH_FACTOR = 2;
 };
 
 template <typename K, typename V, typename Hasher = std::hash<T>>
 class UnorderedMapInsertionOrder {
 public:
-    UnorderedMapInsertionOrder(size_t initialCapacity = HashMapConstants::INIT_CAPACITY,
+    UnorderedMapInsertionOrder(size_t initialCapacity = HashMapConstants::INIT_SIZE,
         double loadFactor = HashMapConstants::INIT_LOAD_FACTOR)
-        : collisionBuckets(initialCapacity)
+        : collisionBuckets(INIT_SIZE)
         , loadFactor(loadFactor)
     {
         if (loadFactor <= 0.0)
@@ -198,15 +198,16 @@ public:
     private:
         friend class UnorderedMapInsertionOrder;
 
-        DataIterator current;
+        ConstDataIterator current;
 
-        ConstIterator(DataIterator iter) { current = iter; }
+        ConstIterator(const ConstDataIterator& iter) { current = iter; }
     };
 
 private:
     typedef std::pair<K, V> DataType;
     typedef std::list<DataType> DataList;
     typedef typename DataList::iterator DataIterator;
+    typedef typename DataList::const_iterator ConstDataIterator;
     typedef std::list<DataIterator> Bucket;
     typedef typename Bucket::iterator BucketIterator;
 
@@ -230,7 +231,7 @@ private:
     {
         return collisionBuckets.size() > 0
             ? collisionBuckets.size() * HashMapConstants::GROWTH_FACTOR
-            : INIT_CAPACITY;
+            : INIT_SIZE;
     }
 
     DataList data;
