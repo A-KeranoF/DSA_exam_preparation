@@ -53,18 +53,18 @@ private:
 
     void heapify(size_t startingIndex)
     {
-        size_t current = startingIndex;
-
-        size_t leftIndex = leftChild(current);
-        size_t rightIndex = rightChild(current);
-
-        bool should_go_left = leftIndex < size()
-            && compare(data[leftIndex].first, data[current].first);
-
-        bool should_go_right = rightIndex < size()
-            && compare(data[rightIndex].first, data[current].first);
-
         while (true) {
+            size_t current = startingIndex;
+
+            size_t leftIndex = leftChild(current);
+            size_t rightIndex = rightChild(current);
+
+            bool should_go_left = leftIndex < size()
+                && compare(data[leftIndex].first, data[current].first);
+
+            bool should_go_right = rightIndex < size()
+                && compare(data[rightIndex].first, data[current].first);
+
             if (!should_go_left && !should_go_right)
                 break;
 
