@@ -146,6 +146,7 @@ template <typename T>
 void TreeSet<T, Comparator>::clear()
 {
     free(root);
+    root = nullptr;
     sz = 0;
 }
 
@@ -164,18 +165,9 @@ bool TreeSet<T, Comparator>::empty() const
 template <typename T>
 bool TreeSet<T, Comparator>::insert(const T& element)
 {
-    Node** current = &root;
+    Node** current = findTarget(element);
 
-    while (*current) {
-        if (compare(*current->data, element))
-            current = &*current->left;
-        else if (compare(element, *current->data))
-            current = &*current->right;
-        else
-            break;
-    }
-
-    if (*current)
+    if (*current != nullptr)
         return false;
 
     *current = new Node(element);
@@ -186,18 +178,9 @@ bool TreeSet<T, Comparator>::insert(const T& element)
 template <typename T>
 bool TreeSet<T, Comparator>::insert(T&& element)
 {
-    Node** current = &root;
+    Node** current = findTarget(element);
 
-    while (*current) {
-        if (compare(*current->data, element))
-            current = &*current->left;
-        else if (compare(element, *current->data))
-            current = &*current->right;
-        else
-            break;
-    }
-
-    if (*current)
+    if (*current != nullptr)
         return false;
 
     *current = new Node(std::move(element));
@@ -208,24 +191,13 @@ bool TreeSet<T, Comparator>::insert(T&& element)
 template <typename T>
 bool TreeSet<T, Comparator>::contains(const T& element) const
 {
-    Node* current = root;
-
-    while (current) {
-        if (compare(current->data, element))
-            current = current->left;
-        else if (compare(element, current->data))
-            current = current->right;
-        else
-            return true;
-    }
-
-    return false;
+    return findTarget(element) != nullptr;
 }
 
 template <typename T>
 bool TreeSet<T, Comparator>::remove(const T& element)
 {
-    Node** current = findTargetToDelete(element);
+    Node** current = findTarget(element);
 
     if (!*current)
         return false;
@@ -267,18 +239,18 @@ typename TreeSet<T, Comparator>::Node* TreeSet<T, Comparator>::getMinNode(Node* 
 }
 
 template <typename T>
-typename TreeSet<T, Comparator>::Node** TreeSet<T, Comparator>::findTargetToDelete(const T& element)
+typename TreeSet<T, Comparator>::Node** TreeSet<T, Comparator>::findTarget(const T& element)
 {
-    Node* current = &root;
+    Node** current = &root;
 
-    while (current) {
-        if (compare(current->data, element))
-            current = current->left;
-        else if (compare(element, current->data))
-            current = current->right;
+    while (*current) {
+        if (compare(*current->data, element))
+            current = *current->left;
+        else if (compare(element, *current->data))
+            current = *current->right;
         else
             break;
     }
 
-    return &current;
+    return current;
 }
