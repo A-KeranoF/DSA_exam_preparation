@@ -36,11 +36,11 @@ public:
         int index = data.size() - 1;
         int parentIndex = parent(index);
         while (index > 0
-            && compare(data[index], data[parentIndex])) // sift up
+            && compare(data[index].first, data[parentIndex].first)) // sift up
         {
             std::swap(data[index], data[parentIndex]); // actual sift
 
-            // start sifting elements furture atop of the branch
+            // start sifting elements further atop of the branch
             index = parentIndex; // go up
             parentIndex = parent(parentIndex); // go up
         }
@@ -97,7 +97,6 @@ private:
         }
     }
 
-private:
     Comparator compare;
     std::vector<std::pair<T, size_t>> data;
     size_t insertion_counter = 0;
