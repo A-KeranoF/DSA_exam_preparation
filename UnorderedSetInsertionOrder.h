@@ -133,7 +133,7 @@ public:
         // because my previous method with inserting is duplicating data.
         // i could have just copied the data and cleared it after, but this copying method is redundant
         for (DataIterator dataIter = data.cbegin(); dataIter != data.cend(); ++dataIter) {
-            size_t bucketIndex = getBucketIndex(data.first);
+            size_t bucketIndex = getBucketIndex(dataIter->first);
             Bucket& bucket = collisionBuckets[bucketIndex];
             bucket.push_back(dataIter);
         }

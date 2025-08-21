@@ -11,7 +11,7 @@ constexpr size_t INIT_SIZE = 8;
 constexpr size_t GROWTH_FACTOR = 2;
 };
 
-template <typename K, typename V, typename Hasher = std::hash<T>>
+template <typename K, typename V, typename Hasher = std::hash<K>>
 class UnorderedMapInsertionOrder {
 public:
     UnorderedMapInsertionOrder(size_t initialCapacity = HashMapConstants::INIT_SIZE,
@@ -49,7 +49,7 @@ public:
             return;
 
         for (DataIterator dataIter = data.cbegin(); dataIter != data.cend(); ++dataIter)
-            collisionBuckets[getBucketIndex(data.first)].push_back(dataIter);
+            collisionBuckets[getBucketIndex(dataIter->first)].push_back(dataIter);
     }
 
     bool insert(const std::pair<K, V>& data)
@@ -63,8 +63,8 @@ public:
         if (bucketIterator != bucket.end())
             return false;
 
-        data.pushFront(data);
-        bucket.pushFront(--data.end());
+        data.push_front(data);
+        bucket.push_front(--data.end());
         ++sz;
 
         if (current_load_factor() >= max_load_factor())
@@ -84,7 +84,7 @@ public:
         if (bucketIterator != bucket.end())
             return false;
 
-        data.push_back(std::move(data));
+        data.push_front(std::move(data));
         bucket.push_front(--data.end());
         ++sz;
 
@@ -99,7 +99,7 @@ public:
         return insert(std::make_pair(key, value);)
     }
 
-    V& modify(K key)
+    V& modify(const K& key)
     {
         if (empty())
             throw std::runtime_error("Map is empty.");
@@ -115,7 +115,7 @@ public:
         return *bucketIterator->second;
     }
 
-    const V& get(K key) const
+    const V& get(const K& key) const
     {
         if (empty())
             throw std::runtime_error("Map is empty.");
@@ -133,7 +133,10 @@ public:
 
     bool contains(const K& key) const
     {
-        return !empty() || getBucketIterator(key, collisionBuckets[getBucketIndex(key)]) != bucket.end();
+        if (!empty())
+            return false;
+        Bucket& bucket = collisionBuckets[getBucketIndex(key)];
+        return getBucketIterator(key, bucket) != bucket.end();
     }
 
     bool remove(K key)
@@ -221,7 +224,7 @@ private:
         auto bucketIterator = bucket.begin();
 
         while (bucketIterator != bucket.end())
-            if ((*bucket->first)++ == key)
+            if (*(bucketIterator++)->first == key)
                 break;
 
         return bucketIterator;
