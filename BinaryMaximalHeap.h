@@ -52,23 +52,23 @@ private:
 
     void heapify(size_t startingIndex)
     {
-        size_t current = startingIndex;
-
-        size_t leftIndex = leftChild(current);
-        size_t rightIndex = rightChild(current);
-
-        bool should_go_left = leftIndex < size()
-            && data[leftIndex] > data[current];
-
-        bool should_go_right = rightIndex < size()
-            && data[rightIndex] > data[current];
-
-        // swap(...) is actual sift
-
-        // current = ...-Index along with the while loop is making
-        // the process of sifting go down the branch
-
         while (true) {
+            size_t current = startingIndex;
+
+            size_t leftIndex = leftChild(current);
+            size_t rightIndex = rightChild(current);
+
+            bool should_go_left = leftIndex < size()
+                && data[leftIndex] > data[current];
+
+            bool should_go_right = rightIndex < size()
+                && data[rightIndex] > data[current];
+
+            // swap(...) is actual sift
+
+            // current = ...-Index along with the while loop is making
+            // the process of sifting go down the branch
+
             if (!should_go_left && !should_go_right)
                 break;
 
