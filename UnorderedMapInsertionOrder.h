@@ -36,8 +36,7 @@ public:
     double max_load_factor() const { return loadFactor; }
     double current_load_factor() const
     {
-        return static_cast<double>(data.size())
-            / collisionBuckets.size();
+        return static_cast<double>(data.size()) / collisionBuckets.size();
     }
 
     void resize(size_t newSize)
@@ -45,7 +44,7 @@ public:
         collisionBuckets.clear();
         collisionBuckets.resize(newSize);
 
-        if (capacity() == 0)
+        if (collisionBuckets.size() == 0)
             return;
 
         for (DataIterator dataIter = data.cbegin(); dataIter != data.cend(); ++dataIter)
@@ -216,7 +215,7 @@ private:
 
     size_t getBucketIndex(const K& key) const
     {
-        return hash(key) % collisionBuckets.capacity();
+        return hash(key) % collisionBuckets.size();
     }
 
     BucketIterator getBucketIterator(const K& key, Bucket& bucket)
