@@ -187,7 +187,7 @@ const T& ArrayDeque<T>::back() const
     if (empty())
         throw std::runtime_error("Deque is empty.");
 
-    return data[tailIndex];
+    return data[tailIndex > 0 ? tailIndex - 1 : capacity - 1];
 }
 
 template <typename T>
@@ -222,8 +222,8 @@ void ArrayDeque<T>::pushFront(const T& element)
     if (size() >= capacity)
         resize(capacity * 2);
 
-    data[headIndex] = element;
     headIndex = moveIndexBackwards(headIndex, capacity);
+    data[headIndex] = element;
     ++sz;
 }
 
