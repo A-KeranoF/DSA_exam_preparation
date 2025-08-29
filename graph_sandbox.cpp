@@ -1,7 +1,10 @@
 #include <vector>
 
+typedef vector<vector<int>> AdjacencyList;
+
 using namespace std;
 
+namespace graph_traversals {
 vector<int> bfs_get_path(const vector<vector<int>>& graph, int start, int target)
 {
     vector<bool> visited(graph.size(), false); // save spot for all graph nodes and mark them NOT visited
@@ -56,7 +59,6 @@ void dfs(const vector<vector<int>>& graph, int start)
     vector<int> visited(graph.size(), false);
     stack<int> neighbors;
 
-    visited[start] = true;
     neighbors.push(start);
 
     while (!toVisit.empty()) {
@@ -102,12 +104,161 @@ void dfsRecursive(const vector<vector<int>>& graph, int startNode)
     dfsRecursiveStep(graph, visited, startNode);
 }
 
+struct weightedEdge {
+    int toVertex = -1;
+    int distance = 0;
+    bool operator<(const edge& rhs) const // or just make custom comparator and pass it as template argument to the heap
+    {
+        return distance > rhs.distance;
+        // it is opposite because by default the priority queue is max heap, // but we need min priority queue
+    }
+};
+
+int dijkstra(const vector<vector<pair<int, int>>>& weightedGraph, const int start, const int target, vector<int>& path)
+{
+    vector<int> distances(weightedGraph.size(), INT_MAX);
+    vector<int> prevs(weightedGraph.size(), -1); // aka parents
+    vector<int> path;
+    priority_queue<weightedEdge> priorityQueue;
+
+    distances[start] = 0; // basically checking for being visited[start]
+    priorityQueue.push(make_pair(start, 0)); // push edge
+
+    while (!priorityQueue.empty()) {
+        weightedEdge current = priorityQueue.top();
+        priorityQueue.pop();
+
+        // when target is reached, build the path, get the total distance cost and terminate
+        if (current.toVertex == target) {
+            int backtrack = target;
+            // build the path from target backwards to origin
+            while (backtrack != start) {
+                path.push_back(backtrack);
+                backtrack = prevs[backtrack];
+            }
+            path.push_back(start); // the start is missed in the if clause, we need to put it in the path
+
+            reverse(path.begin(), path.end());
+
+            return distances[current.toVertex];
+        }
+
+        // traverse neighbors, put them into heap, which will traverse by the lowest cost
+        // (or find the costs if they are not known)
+        for (pair<int, int> neighbor : weightedGraph[current.toVertex]) {
+            int vertex = neighbor.first;
+            int cost = neighbor.second + current.distance;
+
+            if (cost < distances[vertex]) {
+                distances[vertex] = cost; // "graph relaxation" to find indetermined frontal costs
+                priorityQueue.push({ vertex, cost });
+                prevs[vertex] = current.vertex;
+            }
+        }
+    }
+
+    return INT_MAX; // element could not be reached, no path
+}
+
+void dfsTopologicalSortRecursiveStep(const vector<vector<int>>& graph, int current, vector<int>& visited, vector<int>& result)
+{
+    visited[current] = true;
+
+    for (int neighbor : graph[current])
+        if (!visited[neighbor])
+            dfsTopologicalSortRecursiveStep(graph, neighbor, visited, result));
+
+    result.push_back(current);
+}
+
+vector<int> topologicalSort(const vector<vector<int>>& graph) const
+{
+    vector<int> result(graph.size());
+    vector<bool> visited(graph.size(), false);
+
+    for (size_t i = 0; i < graph.size(); ++i)
+        if (!visited[i])
+            dfsTopologicalSortRecursiveStep(graph, i, visited, result);
+
+    reverse(result.begin(), result.end());
+}
+
+};
+
+namespace graph_edge_opeartions {
+
+void add_edge(AdjacencyList& graph, unsigned startVertex, unsigned endVertex)
+{
+    if (startVertex >= graph.size() || endVertex >= graph.size())
+        throw std::runtime_error("Invalid vertex passed");
+
+    graph[startVertex].push_back(endVertex);
+    // if it was weighted, just insert a pair of the end vertex and the cost :)
+}
+
+void add_edge(vector<vector<pair<unsigned, double>>>& graph, unsigned startVertex, unsigned endVertex, double cost)
+{
+    if (startVertex >= graph.size() || endVertex >= graph.size())
+        throw std::runtime_error("Invalid vertex passed");
+
+    graph[startVertex].push_back(make_pair(endVertex, cost));
+}
+
+void remove_edge_oriented(vector<vector<unsigned>>& graph, unsigned startVertex, unsigned endVertex)
+{
+    if (startVertex >= graph.size())
+        throw std::runtime_error("Invalid first vertex passed");
+
+    auto startIter = graph[startVertex].begin();
+
+    while (startIter != graph[startVertex].end()) {
+        if (*startIter == endVertex)
+            break;
+        startIter++;
+    }
+
+    if (startIter == graph[startVertex].end())
+        throw std::runtime_error("Invalid second vertex passed");
+
+    graph[startVertex].erase(startIter);
+}
+
+void remove_edge_NOT_oriented(vector<vector<unsigned>>& graph, unsigned startVertex, unsigned endVertex)
+{
+    if (startVertex >= graph.size())
+        throw std::runtime_error("Invalid first vertex passed");
+
+    auto startIter = graph[startVertex].begin();
+    while (startIter != graph[startVertex].end()) {
+        if (*startIter == endVertex)
+            break;
+        startIter++;
+    }
+
+    if (startIter == graph[startVertex].end())
+        throw std::runtime_error("Invalid second vertex passed");
+
+    graph[startVertex].erase(startIter);
+
+    // now take care of the symetrical edge
+
+    auto endIter = graph[endVertex].begin();
+    while (endIter != graph[endVertex].end()) {
+        if (*endIter == startVertex)
+            break;
+        endIter++;
+    }
+
+    graph[endVertex].erase(endIter);
+}
+};
+
 int main()
 {
     // adjecency list (each index in the big vector corresponds to the node,
     // the elements inside are the neighbors (in this case - an undirected graph))
-    vector<vector<int>> graph = {
-        { 3, 4, 5 },
+    AdjacencyList graph = {
+        { 1, 2, 3 },
         { 0, 4 },
         { 0, 4, 5 },
         { 0, 6 },
