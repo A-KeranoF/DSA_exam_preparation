@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 template <typename T, typename Comparator = std::less<T>>
 class TreeSet {
     struct Node {
@@ -211,7 +213,7 @@ bool TreeSet<T, Comparator>::remove(const T& element)
     else if (!*current->right)
         *current = *current->left;
     else {
-        Node* replaceNode = getMinNode(*current->right);
+        Node** replaceNode = getMinNode(*current->right);
 
         *current = *replaceNode;
         *replaceNode = *replaceNode->right;
@@ -226,14 +228,14 @@ bool TreeSet<T, Comparator>::remove(const T& element)
 }
 
 template <typename T>
-typename TreeSet<T, Comparator>::Node* TreeSet<T, Comparator>::getMinNode(Node* root);
+typename TreeSet<T, Comparator>::Node** TreeSet<T, Comparator>::getMinNode(Node* root);
 {
     if (!root)
         return nullptr;
 
-    Node* current = root;
-    while (current->left)
-        current = current->left;
+    Node** current = &root;
+    while (*current->left)
+        current = *current->left;
 
     return current;
 }
@@ -244,10 +246,12 @@ typename TreeSet<T, Comparator>::Node** TreeSet<T, Comparator>::findTarget(const
     Node** current = &root;
 
     while (*current) {
-        if (compare(*current->data, element))
+        if (compare(element, *current->data))
             current = *current->left;
-        else if (compare(element, *current->data))
+
+        else if (compare(*current->data, element))
             current = *current->right;
+
         else
             break;
     }

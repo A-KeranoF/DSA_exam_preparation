@@ -17,7 +17,7 @@ size_t getTreeHeight(BST_Node* root)
     return root ? 1 + std::max(getTreeHeight(root->left), getTreeHeight(root->right)) : 0;
 }
 
-BST_Node* rightRotate(BST_Node* root)
+BST_Node* leftRotate(BST_Node* root)
 {
     if (!root->left)
         return nullptr;
@@ -112,4 +112,35 @@ BST_Node* build_BST_from_sorted_array_helper(const vector<int>& arr, size_t firs
 BST_Node* build_BST_from_sorted_array(const vector<int>& arr)
 {
     return build_BST_from_sorted_array_helper(arr, 0, arr.size() - 1);
+}
+
+// zad. да се провери дали от два низа с думи може първият да се създаде втория чрез заместване на думи от първия с втория
+
+#include <sstream>
+#include <string>
+#include <unordered_map>
+
+bool canOneStringBeSubstitutedWithOther(const std::string& first, const std::string& second)
+{
+    std::istringstream iss1(first);
+    std::istringstream iss2(first);
+    std::unordered_map<string, string> dict;
+    std::string res1;
+    std::string res2;
+
+    while (true) {
+        if (iss1.eof() && iss2.eof())
+            return true;
+
+        else if (iss.eof() || iss2.eof())
+            return false;
+
+        iss1 >> res1;
+        iss2 >> res2;
+
+        if (dict.find() == dict.end())
+            dict.emplace(res2, res1);
+        else if (dict.at(res2) != res1)
+            return false;
+    }
 }
