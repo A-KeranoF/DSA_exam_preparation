@@ -287,6 +287,30 @@ namespace heap_sort {
 
 namespace topological_sort {
 
+    void topoSortStep(const std::vector<std::vector<int>> adjList, std::vector<bool>& visited, std::vector<int>& result, int current)
+    {
+        visited[current] = true;
+
+        for (auto neighbor : adjList[current])
+            if (!visited[neighbor])
+                topoSortStep(adjList, visited, result, neighbor);
+
+        result.push_back(current);
+    }
+
+    std::vector<int> topologicalSort(const std::vector<std::vector<int>> adjList)
+    {
+        std::vector<int> result(adjList.size());
+        std::vector<bool> visited(adjList.size(), false);
+
+        for (int i = 0; i < adjList.size(); ++i)
+            if (!visited[i])
+                topoSortStep(adjList, visited, result, i);
+
+        std::reverse(result.begin(), result.end());
+        return result;
+    }
+
 } // topological_sort
 
 } // other_sorting_algorithms
