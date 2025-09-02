@@ -22,10 +22,10 @@ void bubbleSortVector(std::vector<T>& vect)
             currentLastSorted = j; // if it doesnt change it means everything is sorted
         }
 
-        if (lastSortedElement == currentLastSorted)
+        if (lastSortedElement == currentLastSorted) // this checks if nothing has changed, nothing has been swapped
             break;
 
-        lastSortedElement = currentLastSorted;
+        lastSortedElement = currentLastSorted; // usually the current index will be one or more behind the lastSortedElement index
     }
 } // bubbleSortVector
 
@@ -54,11 +54,11 @@ template <typename T>
 void selectionSortVector(std::vector<T>& vect)
 {
 
-    for (size_t i = 0; i < vect.size() - 1; ++i) //
+    for (size_t i = 1; i < vect.size() - 1; ++i) //
     {
         size_t minIndex = i;
 
-        for (size_t j = 1; i < vect.size(); ++i)
+        for (size_t j = 0; j < vect.size(); ++j)
             if (vect[j] < vect[minIndex])
                 minIndex = j;
 
@@ -133,21 +133,25 @@ namespace quick_sort {
     template <typename T>
     size_t quickSortPartition(T* arr, size_t size)
     {
+        // this if clause exists because without it later the while loops will MISS them
+        if (arr[0] > arr[size - 1])
+            swap(arr[0], arr[size - 1]);
+
         // different people decide on different pivots, in this case - the pivot is the last element - a popular choice apparently
         T& pivotValue = arr[size - 1];
 
         // indexes that help find and put elements on the according sides compared to pivot
         // (left - smaller elements, right - bigger elements)
         size_t left = 0;
-        size_t right = size; // it is outside the array, but inside the initial corresponding while loop it will go into its correct place
+        size_t right = size - 1;
 
         while (true) {
             // find the first bigger element than the pivot on the left of the pivot where the pivot will go later
-            while (arr[++left] > pivotValue)
+            while (arr[++left] < pivotValue)
                 ;
 
             // find the first smaller element than the pivot on the right of the pivot where the pivot will go later
-            while (arr[--right] < pivotValue)
+            while (arr[--right] > pivotValue)
                 if (left == right) // if they point to the same place, there is no need "right" index to procceed
                     break;
 
@@ -187,14 +191,13 @@ void countingSort(std::vector<int>& vect)
         return;
 
     int min = *std::min_element(vect.begin(), vect.end());
-    int max = *std::min_element(vect.begin(), vect.end());
+    int max = *std::max_element(vect.begin(), vect.end());
 
     size_t countArrSize = max - min + 1; // elements range size
 
     if (min == max)
         return; // all elements are the same, no need to sort
 
-    std::vector<int> result(vect.size());
     std::vector<int> countArr(countArrSize, 0);
 
     // counting the elements "and grouping them"
@@ -205,6 +208,8 @@ void countingSort(std::vector<int>& vect)
     // (i.e. the rightmost available index for such element)
     for (size_t i = 1; i < countArr.size(); ++i)
         countArr[i] += countArr[i - 1];
+
+    std::vector<int> result(vect.size());
 
     // traverse in reverse order, insert grouped elements in descending order
     for (size_t i = vect.size() - 1; i >= 0; --i) //
@@ -224,7 +229,65 @@ void countingSort(std::vector<int>& vect)
     vect = std::move(result);
 } // countingSort
 
-// namespace heap_sort {}
+namespace heap_sort {
+    void heapify(int* arr, int size, int index)
+    {
+        while (true) {
+            int left = 2 * index + 1;
+            int right = 2 * index + 2;
+
+            bool goLeft = left < size && arr[index] < arr[left];
+            bool goRight = right < size && arr[index] < arr[right];
+
+            if (goLeft && goRight) {
+                if (arr[left] < arr[right]) {
+                    swap(arr[left], arr[index]);
+                    index = left;
+                }
+
+                else {
+                    swap(arr[right], arr[index]);
+                    index = left;
+                }
+            }
+
+            else if (goLeft) {
+                swap(arr[left], arr[index]);
+                index = left;
+            }
+
+            else {
+                swap(arr[right], arr[index]);
+                index = right;
+            }
+        }
+    }
+
+    void heapSort(int* arr, int size)
+    {
+        if (size < 2)
+            return;
+
+        // makes the array a max heap
+        for (int i = size / 2 - 1; i >= 0; i--)
+            heapify(arr, size, i);
+
+        int min = size - 1;
+
+        // put the begginning at the end, then let the beginning sink, prioritizing going to the left
+        // and thus it will SOMEHOW make this shit a perfectly balanced binary search tree
+        for (int i = 0; i < size; ++i) {
+            swap(arr[0], arr[min]);
+            heapify(arr, min--, 0);
+        }
+        // it is becoming sorted because since the heap is perfectly balanced, we get the min from the last element,
+        // let it sink from the top to the leftmost possible position it belongs to
+    }
+} // heap_sort
+
+namespace topological_sort {
+
+} // topological_sort
 
 } // other_sorting_algorithms
 
