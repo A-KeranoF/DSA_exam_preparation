@@ -45,7 +45,7 @@ public:
         return *this;
     }
 
-    TreeMap(TreeMap<T>&& other) noexcept
+    TreeMap(TreeMap&& other) noexcept
         : root(other.root))
         , sz(other.sz)
     {
@@ -53,7 +53,7 @@ public:
         other.sz = 0;
     }
 
-    TreeMap<T>& operator=(TreeMap<T>&& other) noexcept
+    TreeMap& operator=(TreeMap&& other) noexcept
     {
         if (this != &other) {
             free(root);
@@ -125,7 +125,7 @@ public:
         return *current->data.second;
     }
 
-    const Value& get(const Key&) const
+    const Value& get(const Key& key) const
     {
         Node** current = findTarget(key);
 
