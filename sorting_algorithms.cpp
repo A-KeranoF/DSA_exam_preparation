@@ -10,7 +10,7 @@ void bubbleSortVector(std::vector<T>& vect)
 {
     size_t lastSortedElement = vect.size() - 1; // no need to sort elements (at the end of the array) that are already sorted
 
-    for (size_t i = 0; i < vect.size(); ++i) //
+    for (size_t i = 0; i < vect.size() - 1; ++i) //
     {
         size_t currentLastSorted = lastSortedElement;
 
@@ -119,7 +119,7 @@ namespace merge_sort {
     template <typename T>
     void mergeSort(T* arr, size_t size)
     {
-        if (size < 2)
+        if (!arr || size < 2)
             return;
 
         T* buffer = new T[size];
@@ -176,7 +176,7 @@ namespace quick_sort {
         size_t pivotIndex = quickSortPartition(arr, size);
 
         quickSort(arr, pivotIndex);
-        quickSort(arr + pivotIndex, size - pivotIndex);
+        quickSort(arr + pivotIndex + 1, size - pivotIndex - 1);
     }
 
 }
@@ -239,6 +239,9 @@ namespace heap_sort {
             bool goLeft = left < size && arr[index] < arr[left];
             bool goRight = right < size && arr[index] < arr[right];
 
+            if (!goLeft && !goRight)
+                break;
+
             if (goLeft && goRight) {
                 if (arr[left] < arr[right]) {
                     swap(arr[left], arr[index]);
@@ -265,7 +268,7 @@ namespace heap_sort {
 
     void heapSort(int* arr, int size)
     {
-        if (size < 2)
+        if (!arr || size < 2)
             return;
 
         // makes the array a max heap

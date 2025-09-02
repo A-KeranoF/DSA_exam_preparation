@@ -99,7 +99,7 @@ public:
         current = new Node(data);
         ++sz;
 
-        balanceTree(root);
+        root = balanceTree(root);
     }
 
     bool insert(std::pair<Key, Value>&& data)
@@ -112,7 +112,7 @@ public:
         current = new Node(std::move(data));
         ++sz;
 
-        balanceTree(root);
+        root = balanceTree(root);
     }
 
     Value& get(const Key& key)
@@ -149,14 +149,14 @@ public:
 
         Node* toDelete = *current;
 
-        if (!*current->left && !*current->right)
+        if (!toDelete->left && !toDelete->right)
             *current = nullptr;
 
-        else if (!*current->left)
-            *current = *current->right;
+        else if (!toDelete->left)
+            *current = toDelete->right;
 
-        else if (!*current->right)
-            *current = *current->left;
+        else if (!toDelete->right)
+            *current = toDelete->left;
 
         else {
             Node** min = getMinNode(toDelete);
@@ -171,7 +171,7 @@ public:
         delete toDelete;
         --sz;
 
-        balanceTree(root);
+        root = balanceTree(root);
     }
 
     class ConstForwardIterator {
@@ -253,10 +253,10 @@ private:
 
         while (*current) {
             if (compare(key, *current->data.first))
-                current = *current->left;
+                current = &(*current)->left;
 
             else if (compare(*current->data.first, key))
-                current = *current->right;
+                current = &(*current)->right;
 
             else
                 break;
@@ -273,7 +273,7 @@ private:
         return current;
     }
 
-    Node* leftRotate(Node* root)
+    Node* rightRotate(Node* root)
     {
         if (!root || !root->left)
             return nullptr;
@@ -285,7 +285,7 @@ private:
         return newRoot;
     }
 
-    Node* rightRotate(Node* root)
+    Node* leftRotate(Node* root)
     {
         if (!root || !root->right)
             return nullptr;
@@ -297,7 +297,7 @@ private:
         return newRoot;
     }
 
-    void balanceTree(Node* root)
+    Node* balanceTree(Node* root)
     {
         if (!root)
             return nullptr;
@@ -305,11 +305,15 @@ private:
         unsigned leftHeight = getHeight(root->left);
         unsigned rightHeight = getHeight(root->right);
 
+        Node* newRoot = root;
+
         for (unsigned i = rightHeight; i < leftHeight - 1; ++i)
-            rightRotate(root);
+            newRoot = rightRotate(root);
 
         for (unsigned i = leftHeight; i < rightHeight - 1, ++i)
-            leftRotate(root);
+            newRoot = leftRotate(root);
+
+        return newRoot;
     }
 
     unsigned getHeight(Node* root)
