@@ -146,7 +146,7 @@ size_t getTreeSize(Node* root)
 }
 
 template <>
-bool checkIfTreeIsSetFromOneToN(Node<size_t>* root, std::vector<bool>& visited)
+bool checkIfTreeIsSetFromOneToNHelper(Node<size_t>* root, std::vector<bool>& visited)
 {
     if (!root)
         return true;
