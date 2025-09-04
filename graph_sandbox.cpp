@@ -1,11 +1,12 @@
+#include <utility>
 #include <vector>
-
-typedef vector<vector<int>> AdjacencyList;
 
 using namespace std;
 
+typedef AdjacencyList AdjacencyList;
+
 namespace graph_traversals {
-vector<int> bfs_get_path(const vector<vector<int>>& graph, int start, int target)
+vector<int> bfs_get_path(const AdjacencyList& graph, int start, int target)
 {
     vector<bool> visited(graph.size(), false); // save spot for all graph nodes and mark them NOT visited
     queue<int> neighbors;
@@ -54,7 +55,7 @@ vector<int> bfs_get_path(const vector<vector<int>>& graph, int start, int target
     return path;
 }
 
-void dfs(const vector<vector<int>>& graph, int start)
+void dfs(const AdjacencyList& graph, int start)
 {
     vector<int> visited(graph.size(), false);
     stack<int> neighbors;
@@ -64,14 +65,14 @@ void dfs(const vector<vector<int>>& graph, int start)
     while (!toVisit.empty()) {
         int element = neighbors.top();
 
+        // insert custom logic here 1
+
+        neighbors.push(element); // simulate pushing the current to system stack for recursion. it is the same as the pushing to stack below but we need to preemptively put the current element to stack because a recursion will have already done it while making the callbacks (also we dont want to drop the first element, we need it for callbacks too)
+
         if (visited[element])
             continue;
 
         visited[element] = true;
-
-        // insert custom logic here 1
-
-        neighbors.push(element); // simulate pushing the current to system stack for recursion. it is the same as the pushing to stack below but we need to preemptively put the current element to stack because a recursion will have already done it while making the callbacks (also we dont want to drop the first element, we need it for callbacks too)
 
         // insert custom logic here 2
 
@@ -87,7 +88,7 @@ void dfs(const vector<vector<int>>& graph, int start)
     }
 }
 
-void dfsRecursiveStep(const vector<vector<int>>& graph, vector<int>& visited, int current)
+void dfsRecursiveStep(const AdjacencyList& graph, vector<int>& visited, int current)
 {
     visited[current] = true;
 
@@ -98,7 +99,7 @@ void dfsRecursiveStep(const vector<vector<int>>& graph, vector<int>& visited, in
             dfsRecursiveStep(graph, visited, neighbor)); // this is what the iterative version tries to emulate, but here the recursion simplifies the moments when we get to act with custom logic
 }
 
-void dfsRecursive(const vector<vector<int>>& graph, int startNode)
+void dfsRecursive(const AdjacencyList& graph, int startNode)
 {
     vector<int> visited(graph.size(), false);
     dfsRecursiveStep(graph, visited, startNode);
@@ -160,7 +161,7 @@ int dijkstra(const vector<vector<pair<int, int>>>& weightedGraph, const int star
     return INT_MAX; // element could not be reached, no path
 }
 
-void dfsTopologicalSortRecursiveStep(const vector<vector<int>>& graph, int current, vector<int>& visited, vector<int>& result)
+void dfsTopologicalSortRecursiveStep(const AdjacencyList& graph, int current, vector<int>& visited, vector<int>& result)
 {
     visited[current] = true;
 
@@ -171,7 +172,7 @@ void dfsTopologicalSortRecursiveStep(const vector<vector<int>>& graph, int curre
     result.push_back(current);
 }
 
-vector<int> topologicalSort(const vector<vector<int>>& graph) const
+vector<int> topologicalSort(const AdjacencyList& graph) const
 {
     vector<int> result(graph.size());
     vector<bool> visited(graph.size(), false);
@@ -204,7 +205,7 @@ void add_edge(vector<vector<pair<unsigned, double>>>& graph, unsigned startVerte
     graph[startVertex].push_back(make_pair(endVertex, cost));
 }
 
-void remove_edge_oriented(vector<vector<unsigned>>& graph, unsigned startVertex, unsigned endVertex)
+void remove_edge_oriented(AdjacencyList& graph, unsigned startVertex, unsigned endVertex)
 {
     if (startVertex >= graph.size())
         throw std::runtime_error("Invalid first vertex passed");
@@ -223,7 +224,7 @@ void remove_edge_oriented(vector<vector<unsigned>>& graph, unsigned startVertex,
     graph[startVertex].erase(startIter);
 }
 
-void remove_edge_NOT_oriented(vector<vector<unsigned>>& graph, unsigned startVertex, unsigned endVertex)
+void remove_edge_NOT_oriented(AdjacencyList& graph, unsigned startVertex, unsigned endVertex)
 {
     if (startVertex >= graph.size())
         throw std::runtime_error("Invalid first vertex passed");
@@ -252,6 +253,77 @@ void remove_edge_NOT_oriented(vector<vector<unsigned>>& graph, unsigned startVer
     graph[endVertex].erase(endIter);
 }
 };
+
+unsigned countConnectedComponents(const AdjacencyList& graph)
+{
+    unsigned count = 0;
+    vector<int> visited(graph.size(), false);
+
+    for (int i = 0; i < graph.size(); ++i) {
+        if (!visited[i]) {
+            graph_traversals::dfsRecursiveStep(graph, visited, startNode);
+            count++;
+        }
+    }
+
+    return count;
+}
+
+struct MST {
+    std::vector<std::tuple<size_t, size_t, int>> edges;
+    size_t sumOfWeights;
+};
+
+MST Prim(AdjacencyList& graph) const
+{
+    struct primEdge {
+        size_t start;
+        size_t end;
+        int weight;
+        bool operator>(const primEdge& other) const
+        {
+            return weight > other.weight;
+        }
+    };
+
+    MST result;
+    result.sumOfWeights = 0;
+
+    std::priority_queue<primEdge, std::vector<primEdge>, std::greater<primEdge>> pq;
+    std::vector<bool> visited(graph.size(), false);
+
+    pq.push({ 0, 0, 0 });
+    size_t addedEdges = 0;
+    bool isFirst = true;
+
+    while (addedEdges < graph.size() - 1 && !pq.empty()) {
+        auto current = pq.top();
+        pq.pop();
+
+        if (visited[current.end]) {
+            continue;
+        }
+
+        visited[current.end] = true;
+        for (int i = 0; i < adj[current.end].size(); i++) {
+            pq.push({ current.end,
+                (size_t)adj[current.end][i].first,
+                adj[current.end][i].second });
+        }
+
+        if (isFirst) {
+            isFirst = false;
+            continue;
+        }
+
+        // result.edges.push_back({ current.start, current.end, current.weight });
+        result.edges.push_back({ current });
+        result.sumOfWeights += current.weight;
+        addedEdges++;
+    }
+
+    return result;
+}
 
 int main()
 {
