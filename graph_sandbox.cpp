@@ -3,7 +3,7 @@
 
 using namespace std;
 
-typedef AdjacencyList AdjacencyList;
+typedef vector<vector<int>> AdjacencyList;
 
 namespace graph_traversals {
 vector<int> bfs_get_path(const AdjacencyList& graph, int start, int target)
